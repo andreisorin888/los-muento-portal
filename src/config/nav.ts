@@ -14,6 +14,7 @@ export const RANKS = [
   { name: "Sottocapo", level: 50 },
   { name: "Soldier", level: 30 },
   { name: "Associate", level: 20 },
+  { name: "Vizitator", level: 10 },
 ] as const;
 
 export type Column = { key: string; label: string; kind?: "badge" | "mono" };

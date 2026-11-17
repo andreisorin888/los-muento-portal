@@ -18,7 +18,7 @@ export default async function middleware(req: NextRequest) {
   }
 
   if (!token.memberId) {
-    return NextResponse.redirect(new URL("/setup", req.url));
+    return NextResponse.redirect(new URL("/register", req.url));
   }
 
   if (token.memberStatus === "ARHIVAT" || token.memberStatus === "SUSPENDAT") {
@@ -30,6 +30,6 @@ export default async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api/auth|api/setup|_next/static|_next/image|favicon.ico|login|pending|setup|images).*)",
+    "/((?!api/auth|api/setup|_next/static|_next/image|favicon.ico|login|pending|setup|register|images).*)",
   ],
 };

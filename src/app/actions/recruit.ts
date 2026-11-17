@@ -101,32 +101,52 @@ export async function approveRecruit(
     const userId = session!.user.id;
 
     await db.$transaction(async (tx) => {
-      const memberCode = await generateNextMemberCode();
-      const member = await tx.member.create({
-        data: {
-          memberCode,
-          userId,
-          discordId: recruit.discordId ?? `discord_${recruit.id}`,
-          discordName: recruit.discordName,
-          name: memberName.trim(),
-          rankName,
-          rankLevel,
-          status: "PROBATORIE",
-          recruitedById: recruit.recruitedById,
-          deptId: deptId || null,
-        },
-      });
+      let resolvedMemberId: string;
+
+      if (recruit.memberId) {
+        // Auto-registered via portal: update existing Vizitator member
+        await tx.member.update({
+          where: { id: recruit.memberId },
+          data: {
+            name: memberName.trim(),
+            rankName,
+            rankLevel,
+            status: "ACTIV",
+            deptId: deptId || null,
+          },
+        });
+        resolvedMemberId = recruit.memberId;
+      } else {
+        // Classic flow: create new member
+        const memberCode = await generateNextMemberCode();
+        const member = await tx.member.create({
+          data: {
+            memberCode,
+            userId,
+            discordId: recruit.discordId ?? `discord_${recruit.id}`,
+            discordName: recruit.discordName,
+            name: memberName.trim(),
+            rankName,
+            rankLevel,
+            status: "PROBATORIE",
+            recruitedById: recruit.recruitedById,
+            deptId: deptId || null,
+          },
+        });
+        resolvedMemberId = member.id;
+      }
+
       await tx.recruit.update({
         where: { id: recruitId },
         data: {
           status: "APROBAT",
           approvedById: actor.id,
           approvedAt: new Date(),
-          memberId: member.id,
+          memberId: resolvedMemberId,
         },
       });
       await auditLogTx(tx, actor.id, "RECRUIT_APPROVED", "Recruit", recruitId, {
-        after: { memberId: member.id, memberCode },
+        after: { memberId: resolvedMemberId, rankName, rankLevel },
       });
     });
 
