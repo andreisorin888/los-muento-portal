@@ -1,0 +1,868 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── NextAuth required models ──────────────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  member        Member?
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ── App models ────────────────────────────────────────────────────────────────
+
+model Member {
+  id            String       @id @default(cuid())
+  memberCode    String       @unique
+  userId        String?      @unique
+  discordId     String?      @unique
+  discordName   String       @default("")
+  name          String
+  rankLevel     Int          @default(20)
+  rankName      String       @default("Associate")
+  status        MemberStatus @default(ACTIV)
+  role          MemberRole   @default(LEGAL)
+  points        Int          @default(0)
+  joinedAt      DateTime     @default(now())
+  archivedAt    DateTime?
+  archivedNote  String?
+  deptId        String?
+  crewId        String?
+  recruitedById String?
+
+  user          User?         @relation(fields: [userId], references: [id])
+  dept          Department?   @relation(fields: [deptId], references: [id])
+  crew          Crew?         @relation("CrewMembers", fields: [crewId], references: [id])
+  captainOfCrew Crew?         @relation("CrewCapo")
+  recruitedBy   Member?       @relation("Recruited", fields: [recruitedById], references: [id])
+  recruits      Member[]      @relation("Recruited")
+  rankHistory   RankHistory[]
+  warnings      Warning[]
+  activities    Activity[]
+  recruiterFor  Recruit[]     @relation("RecruiterOf")
+  approvedFor   Recruit[]     @relation("ApproverOf")
+  auditActions  AuditLog[]    @relation("AuditActor")
+
+  // Phase 5
+  announcements          Announcement[]       @relation("AnnouncementAuthor")
+  announcementReads      AnnouncementRead[]   @relation("AnnouncementReader")
+  monthlyWins            MonthlyWinner[]      @relation("MonthlyWinner")
+  confirmedWins          MonthlyWinner[]      @relation("WinnerConfirmer")
+  managementNotes        ManagementNote[]     @relation("NoteAuthor")
+
+  // Phase 6
+  pollsCreated           Poll[]               @relation("PollCreator")
+  pollVotes              PollVote[]           @relation("PollVoter")
+  trainingCreated        TrainingPlan[]       @relation("TrainingCreator")
+  trainingProgress       TrainingProgress[]   @relation("TrainingStudent")
+  wikiPages              WikiPage[]           @relation("WikiAuthor")
+  wikiEdits              WikiVersion[]        @relation("WikiEditor")
+  stashListings          StashListing[]
+
+  // Phase 4
+  chestTransactions      ChestTransaction[]   @relation("ChestTxMember")
+  submittedItemTx        ChestItemTx[]        @relation("ChestItemTxMember")
+  approvedItemTx         ChestItemTx[]        @relation("ChestItemTxApprover")
+  approvedChestTx        ChestTransaction[]   @relation("ChestTxApprover")
+  targetedChestTx        ChestTransaction[]   @relation("ChestTxTarget")
+  financeRecords         FinanceRecord[]      @relation("FinanceMember")
+  approvedFinanceRecords FinanceRecord[]      @relation("FinanceApprover")
+  createdTasks           Task[]               @relation("TaskCreator")
+  taskCompletions        TaskCompletion[]     @relation("TaskCompleter")
+  createdEvents          OrgEvent[]           @relation("EventCreator")
+  eventAttendances       EventAttendance[]    @relation("EventAttendee")
+  ledRobberies           Robbery[]            @relation("RobberyLeader")
+  robberyParticipations  RobberyParticipant[] @relation("RobberyParticipant")
+  controlledTerritories  Territory[]          @relation("TerritoryController")
+  territoryChanges       TerritoryHistory[]   @relation("TerritoryChanger")
+  heldWeapons            Weapon[]             @relation("WeaponHolder")
+  weaponHistoryActions   WeaponHistory[]      @relation("WeaponHistoryActor")
+  ammoStockUpdates       AmmoStock[]          @relation("AmmoUpdater")
+  ammoAllocations        AmmoAllocation[]     @relation("AmmoHolder")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum MemberStatus {
+  ACTIV
+  INACTIV
+  SUSPENDAT
+  PROBATORIE
+  ARHIVAT
+}
+
+enum MemberRole {
+  LEGAL
+  ILEGAL
+}
+
+model Activity {
+  id          String   @id @default(cuid())
+  memberId    String
+  title       String
+  description String?
+  type        String   @default("ALTELE")
+  proofUrl    String?
+  points      Int      @default(1)
+  createdAt   DateTime @default(now())
+
+  member   Member           @relation(fields: [memberId], references: [id])
+  category ActivityCategory @relation(fields: [type], references: [slug])
+}
+
+model ActivityCategory {
+  id         String     @id @default(cuid())
+  slug       String     @unique
+  label      String
+  points     Int        @default(1)
+  isActive   Boolean    @default(true)
+  sortOrder  Int        @default(0)
+  createdAt  DateTime   @default(now())
+  activities Activity[]
+}
+
+model Department {
+  id      String   @id @default(cuid())
+  name    String   @unique
+  leadId  String?
+  members Member[]
+  crews   Crew[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Crew {
+  id     String      @id @default(cuid())
+  name   String
+  capoId String      @unique
+  deptId String?
+
+  capo    Member      @relation("CrewCapo", fields: [capoId], references: [id])
+  dept    Department? @relation(fields: [deptId], references: [id])
+  members Member[]    @relation("CrewMembers")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RankHistory {
+  id            String @id @default(cuid())
+  memberId      String
+  fromRank      String
+  toRank        String
+  fromLevel     Int
+  toLevel       Int
+  reason        String
+  performedById String
+
+  member Member @relation(fields: [memberId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Warning {
+  id           String          @id @default(cuid())
+  memberId     String
+  severity     WarningSeverity
+  reason       String
+  notes        String?
+  issuedById   String
+  resolvedAt   DateTime?
+  resolvedNote String?
+
+  member Member @relation(fields: [memberId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum WarningSeverity {
+  MINOR
+  MAJOR
+  FINAL
+}
+
+model Recruit {
+  id             String        @id @default(cuid())
+  discordName    String
+  discordId      String?
+  status         RecruitStatus @default(CANDIDAT)
+  recruitedById  String
+  notes          String?
+  probationStart DateTime?
+  approvedById   String?
+  approvedAt     DateTime?
+  rejectedNote   String?
+  memberId       String?
+
+  recruitedBy Member  @relation("RecruiterOf", fields: [recruitedById], references: [id])
+  approvedBy  Member? @relation("ApproverOf", fields: [approvedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum RecruitStatus {
+  CANDIDAT
+  PROBATIE
+  APROBAT
+  RESPINS
+}
+
+model AuditLog {
+  id       String @id @default(cuid())
+  actorId  String
+  action   String
+  entity   String
+  entityId String
+  before   Json?
+  after    Json?
+  note     String?
+
+  actor Member? @relation("AuditActor", fields: [actorId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model OrgConfig {
+  key       String @id
+  value     String
+
+  updatedAt DateTime @updatedAt
+}
+
+// ── Phase 4 shared ────────────────────────────────────────────────────────────
+
+enum ApprovalStatus {
+  ASTEPTARE
+  APROBAT
+  RESPINS
+}
+
+// ── Seif și inventar ──────────────────────────────────────────────────────────
+
+model Chest {
+  id           String             @id @default(cuid())
+  balance      Int                @default(0)
+  transactions ChestTransaction[]
+  itemStocks   ChestItemStock[]
+  itemTxs      ChestItemTx[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+}
+
+model ChestTransaction {
+  id             String         @id @default(cuid())
+  chestId        String
+  type           ChestTxType
+  amount         Int
+  note           String
+  submittedById  String
+  targetMemberId String?
+  approvalStatus ApprovalStatus @default(ASTEPTARE)
+  approvedById   String?
+  rejectionNote  String?
+
+  chest        Chest   @relation(fields: [chestId], references: [id])
+  submittedBy  Member  @relation("ChestTxMember", fields: [submittedById], references: [id])
+  approvedBy   Member? @relation("ChestTxApprover", fields: [approvedById], references: [id])
+  targetMember Member? @relation("ChestTxTarget", fields: [targetMemberId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+enum ChestTxType {
+  DEPUNERE
+  RETRAGERE
+  TRANSFER
+  CORECTIE
+}
+
+// ── Finanțe ───────────────────────────────────────────────────────────────────
+
+model FinanceCategory {
+  id      String              @id @default(cuid())
+  name    String              @unique
+  type    FinanceCategoryType
+  records FinanceRecord[]
+
+  createdAt DateTime @default(now())
+}
+
+enum FinanceCategoryType {
+  VENIT
+  CHELTUIALA
+}
+
+model FinanceRecord {
+  id             String         @id @default(cuid())
+  type           FinanceTxType
+  amount         Int
+  note           String
+  date           DateTime       @default(now())
+  categoryId     String?
+  submittedById  String
+  approvalStatus ApprovalStatus @default(ASTEPTARE)
+  approvedById   String?
+  rejectionNote  String?
+
+  category    FinanceCategory? @relation(fields: [categoryId], references: [id])
+  submittedBy Member           @relation("FinanceMember", fields: [submittedById], references: [id])
+  approvedBy  Member?          @relation("FinanceApprover", fields: [approvedById], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+enum FinanceTxType {
+  VENIT
+  CHELTUIALA
+  TRANSFER
+  AJUSTARE
+}
+
+// ── Sarcini ───────────────────────────────────────────────────────────────────
+
+model Task {
+  id           String       @id @default(cuid())
+  title        String
+  description  String?
+  priority     TaskPriority @default(NORMAL)
+  dueDate      DateTime?
+  assigneeType AssigneeType
+  assigneeId   String?
+  status       TaskStatus   @default(ACTIV)
+  createdById  String
+
+  createdBy   Member           @relation("TaskCreator", fields: [createdById], references: [id])
+  completions TaskCompletion[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TaskCompletion {
+  id       String  @id @default(cuid())
+  taskId   String
+  memberId String
+  note     String?
+  proofUrl String?
+
+  task   Task   @relation(fields: [taskId], references: [id])
+  member Member @relation("TaskCompleter", fields: [memberId], references: [id])
+
+  @@unique([taskId, memberId])
+
+  createdAt DateTime @default(now())
+}
+
+enum TaskPriority {
+  SCAZUTA
+  NORMAL
+  RIDICATA
+  URGENTA
+}
+
+enum TaskStatus {
+  ACTIV
+  FINALIZAT
+  ANULAT
+}
+
+enum AssigneeType {
+  TOTI
+  GRAD
+  DEPARTAMENT
+  MEMBRU
+}
+
+// ── Calendar Evenimente ───────────────────────────────────────────────────────
+
+model OrgEvent {
+  id               String    @id @default(cuid())
+  title            String
+  type             EventType
+  description      String?
+  scheduledAt      DateTime
+  createdById      String
+  reminderSentAt   DateTime?
+
+  createdBy  Member            @relation("EventCreator", fields: [createdById], references: [id])
+  attendance EventAttendance[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EventAttendance {
+  id       String           @id @default(cuid())
+  eventId  String
+  memberId String
+  status   AttendanceStatus @default(INVITAT)
+
+  event  OrgEvent @relation(fields: [eventId], references: [id])
+  member Member   @relation("EventAttendee", fields: [memberId], references: [id])
+
+  @@unique([eventId, memberId])
+
+  createdAt DateTime @default(now())
+}
+
+enum EventType {
+  SEDINTA
+  OPERATIUNE
+  INSTRUIRE
+  ALTELE
+}
+
+enum AttendanceStatus {
+  INVITAT
+  CONFIRMAT
+  PREZENT
+  ABSENT
+}
+
+// ── Jafuri ────────────────────────────────────────────────────────────────────
+
+model Robbery {
+  id          String        @id @default(cuid())
+  ref         String        @unique
+  type        String
+  leaderId    String
+  description String?
+  reward      Int           @default(0)
+  status      RobberyStatus @default(PLANIFICAT)
+
+  leader       Member               @relation("RobberyLeader", fields: [leaderId], references: [id])
+  participants RobberyParticipant[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RobberyParticipant {
+  id        String  @id @default(cuid())
+  robberyId String
+  memberId  String
+  share     Int     @default(0)
+  note      String?
+
+  robbery Robbery @relation(fields: [robberyId], references: [id])
+  member  Member  @relation("RobberyParticipant", fields: [memberId], references: [id])
+
+  @@unique([robberyId, memberId])
+
+  createdAt DateTime @default(now())
+}
+
+enum RobberyStatus {
+  PLANIFICAT
+  REUSIT
+  ESUAT
+  ANULAT
+}
+
+// ── Teritorii ─────────────────────────────────────────────────────────────────
+
+model Territory {
+  id             String          @id @default(cuid())
+  name           String          @unique
+  description    String?
+  status         TerritoryStatus @default(NEUTRU)
+  controlledById String?
+
+  controlledBy Member?            @relation("TerritoryController", fields: [controlledById], references: [id])
+  history      TerritoryHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TerritoryHistory {
+  id          String          @id @default(cuid())
+  territoryId String
+  note        String?
+  fromStatus  TerritoryStatus?
+  toStatus    TerritoryStatus
+  changedById String
+
+  territory Territory @relation(fields: [territoryId], references: [id])
+  changedBy Member    @relation("TerritoryChanger", fields: [changedById], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+enum TerritoryStatus {
+  CONTROLAT
+  CONTESTAT
+  NEUTRU
+}
+
+// ── Armurărie ─────────────────────────────────────────────────────────────────
+
+model Weapon {
+  id           String       @id @default(cuid())
+  name         String
+  type         String
+  serial       String?      @unique
+  status       WeaponStatus @default(DISPONIBIL)
+  assignedToId String?
+  notes        String?
+
+  assignedTo Member?         @relation("WeaponHolder", fields: [assignedToId], references: [id])
+  history    WeaponHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WeaponHistory {
+  id            String            @id @default(cuid())
+  weaponId      String
+  type          WeaponHistoryType
+  memberId      String?
+  note          String?
+  recordedById  String
+
+  weapon     Weapon @relation(fields: [weaponId], references: [id])
+  recordedBy Member @relation("WeaponHistoryActor", fields: [recordedById], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model AmmoStock {
+  id          String           @id @default(cuid())
+  ammoType    String           @unique
+  quantity    Int              @default(0)
+  updatedById String?
+  note        String?
+  allocations AmmoAllocation[]
+
+  updatedBy Member? @relation("AmmoUpdater", fields: [updatedById], references: [id])
+
+  updatedAt DateTime @updatedAt
+}
+
+model AmmoAllocation {
+  id         String  @id @default(cuid())
+  ammoTypeId String
+  memberId   String
+  quantity   Int
+  note       String?
+
+  ammoStock AmmoStock @relation(fields: [ammoTypeId], references: [id])
+  member    Member    @relation("AmmoHolder", fields: [memberId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+enum WeaponStatus {
+  DISPONIBIL
+  ATRIBUIT
+  PIERDUT
+  RETRAS
+}
+
+enum WeaponHistoryType {
+  ATRIBUIRE
+  RETURNARE
+  TRANSFER
+  PIERDERE
+}
+
+// ── Phase 5 ───────────────────────────────────────────────────────────────────
+
+model Announcement {
+  id               String    @id @default(cuid())
+  title            String
+  body             String
+  minLevel         Int       @default(20)
+  authorId         String
+  discordPostedAt  DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  author Member             @relation("AnnouncementAuthor", fields: [authorId], references: [id])
+  reads  AnnouncementRead[]
+}
+
+model AnnouncementRead {
+  id             String   @id @default(cuid())
+  announcementId String
+  memberId       String
+  readAt         DateTime @default(now())
+
+  announcement Announcement @relation(fields: [announcementId], references: [id])
+  member       Member       @relation("AnnouncementReader", fields: [memberId], references: [id])
+
+  @@unique([announcementId, memberId])
+}
+
+model MonthlyWinner {
+  id            String    @id @default(cuid())
+  year          Int
+  month         Int
+  winnerId      String
+  points        Int
+  confirmedById String?
+  confirmedAt   DateTime?
+  note          String?
+
+  winner    Member  @relation("MonthlyWinner", fields: [winnerId], references: [id])
+  confirmedBy Member? @relation("WinnerConfirmer", fields: [confirmedById], references: [id])
+
+  @@unique([year, month])
+  createdAt DateTime @default(now())
+}
+
+model ManagementNote {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author Member @relation("NoteAuthor", fields: [authorId], references: [id])
+}
+
+// ── Phase 6 ───────────────────────────────────────────────────────────────────
+
+// Vot / Sondaje
+model Poll {
+  id          String   @id @default(cuid())
+  question    String
+  description String?
+  minLevel    Int      @default(20)
+  endsAt      DateTime
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  options   PollOption[]
+  votes     PollVote[]
+  createdBy Member @relation("PollCreator", fields: [createdById], references: [id])
+}
+
+model PollOption {
+  id     String @id @default(cuid())
+  pollId String
+  text   String
+
+  poll  Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes PollVote[]
+}
+
+model PollVote {
+  id       String   @id @default(cuid())
+  pollId   String
+  optionId String
+  memberId String
+  votedAt  DateTime @default(now())
+
+  poll   Poll       @relation(fields: [pollId], references: [id])
+  option PollOption @relation(fields: [optionId], references: [id])
+  member Member     @relation("PollVoter", fields: [memberId], references: [id])
+
+  @@unique([pollId, memberId])
+}
+
+// Plan antrenament
+model TrainingPlan {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  steps     TrainingStep[]
+  progress  TrainingProgress[]
+  createdBy Member @relation("TrainingCreator", fields: [createdById], references: [id])
+}
+
+model TrainingStep {
+  id          String  @id @default(cuid())
+  planId      String
+  order       Int
+  title       String
+  description String?
+
+  plan     TrainingPlan      @relation(fields: [planId], references: [id], onDelete: Cascade)
+  progress TrainingProgress[]
+}
+
+model TrainingProgress {
+  id          String   @id @default(cuid())
+  planId      String
+  stepId      String
+  memberId    String
+  note        String?
+  proofUrl    String?
+  completedAt DateTime @default(now())
+
+  plan   TrainingPlan @relation(fields: [planId], references: [id])
+  step   TrainingStep @relation(fields: [stepId], references: [id])
+  member Member       @relation("TrainingStudent", fields: [memberId], references: [id])
+
+  @@unique([stepId, memberId])
+}
+
+// Wiki intern
+model WikiPage {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  body      String
+  minLevel  Int      @default(20)
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author   Member       @relation("WikiAuthor", fields: [authorId], references: [id])
+  versions WikiVersion[]
+}
+
+model WikiVersion {
+  id         String   @id @default(cuid())
+  pageId     String
+  body       String
+  editedById String
+  editedAt   DateTime @default(now())
+
+  page     WikiPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  editedBy Member   @relation("WikiEditor", fields: [editedById], references: [id])
+}
+
+// ── Inventar seif ─────────────────────────────────────────────────────────────
+
+model ChestItemType {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  label     String
+  emoji     String   @default("📦")
+  unit      String   @default("buc.")
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+
+  stocks  ChestItemStock[]
+  txLines ChestItemTxLine[]
+
+  createdAt DateTime @default(now())
+}
+
+model ChestItemStock {
+  id         String @id @default(cuid())
+  chestId    String
+  itemTypeId String
+  quantity   Int    @default(0)
+
+  chest    Chest         @relation(fields: [chestId], references: [id])
+  itemType ChestItemType @relation(fields: [itemTypeId], references: [id])
+
+  @@unique([chestId, itemTypeId])
+  updatedAt DateTime @updatedAt
+}
+
+model ChestItemTx {
+  id             String          @id @default(cuid())
+  chestId        String
+  type           ChestItemTxType
+  note           String
+  submittedById  String
+  approvalStatus ApprovalStatus  @default(ASTEPTARE)
+  approvedById   String?
+  rejectionNote  String?
+
+  chest       Chest             @relation(fields: [chestId], references: [id])
+  submittedBy Member            @relation("ChestItemTxMember", fields: [submittedById], references: [id])
+  approvedBy  Member?           @relation("ChestItemTxApprover", fields: [approvedById], references: [id])
+  lines       ChestItemTxLine[]
+
+  createdAt DateTime @default(now())
+}
+
+model ChestItemTxLine {
+  id         String @id @default(cuid())
+  txId       String
+  itemTypeId String
+  quantity   Int
+
+  tx       ChestItemTx   @relation(fields: [txId], references: [id], onDelete: Cascade)
+  itemType ChestItemType @relation(fields: [itemTypeId], references: [id])
+}
+
+enum ChestItemTxType {
+  DEPUNERE
+  RETRAGERE
+  CORECTIE
+}
+
+// ── Stash marketplace ─────────────────────────────────────────────────────────
+
+model StashListing {
+  id        String    @id @default(cuid())
+  memberId  String
+  item      StashItem
+  quantity  Int       @default(0)
+  price     Int       @default(0)
+  updatedAt DateTime  @updatedAt
+
+  member Member @relation(fields: [memberId], references: [id])
+
+  @@unique([memberId, item])
+}
+
+enum StashItem {
+  TEC
+  GLOANTE_TEC
+  VESTA
+  TRUSA_MEDICALA
+  PASTILE
+}
