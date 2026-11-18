@@ -76,7 +76,7 @@ export default async function MembersPage() {
         members={members}
         total={total}
         actorLevel={session?.user?.rankLevel ?? 20}
-        taskStatusMap={weeklyTasks.length > 0 ? taskStatusMap : undefined}
+        taskStatusMap={taskStatusMap}
       />
     </div>
   );

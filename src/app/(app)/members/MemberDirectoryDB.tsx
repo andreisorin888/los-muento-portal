@@ -28,7 +28,7 @@ export function MemberDirectoryDB({
   members: MemberRow[];
   total: number;
   actorLevel: number;
-  taskStatusMap?: Record<string, TaskWeeklyStatus>;
+  taskStatusMap: Record<string, TaskWeeklyStatus>;
 }) {
   const [q, setQ] = useState("");
   const [rankFilter, setRankFilter] = useState("Toate");
@@ -88,7 +88,7 @@ export function MemberDirectoryDB({
               <th className="th">Departament</th>
               <th className="th">Echipă</th>
               <th className="th">Stare</th>
-              {taskStatusMap && <th className="th">Task săpt.</th>}
+              <th className="th">Task săpt.</th>
               <th className="th">Înscris la</th>
             </tr>
           </thead>
@@ -108,25 +108,23 @@ export function MemberDirectoryDB({
                   <td className="td">{m.dept?.name ?? "—"}</td>
                   <td className="td">{m.crew?.name ?? "—"}</td>
                   <td className="td"><Badge>{STATUS_LABELS[m.status]}</Badge></td>
-                  {taskStatusMap && (
-                    <td className="td">
-                      {!ts ? (
-                        <span className="text-xs text-muted">—</span>
-                      ) : ts.completedLatest ? (
-                        <span className="inline-flex items-center gap-1 text-xs text-emerald font-gta font-semibold tracking-wide">
-                          <CheckCircle2 className="h-3.5 w-3.5" /> Predat
-                        </span>
-                      ) : ts.missedCount >= 3 ? (
-                        <span className="inline-flex items-center gap-1 text-xs text-rose-400 font-gta font-semibold tracking-wide" title={`${ts.missedCount} taskuri consecutive nepredate`}>
-                          <AlertTriangle className="h-3.5 w-3.5" /> {ts.missedCount} nepredate
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-xs text-gold font-gta font-semibold tracking-wide">
-                          <XCircle className="h-3.5 w-3.5" /> {ts.missedCount} nepred.
-                        </span>
-                      )}
-                    </td>
-                  )}
+                  <td className="td">
+                    {!ts ? (
+                      <span className="text-xs text-muted">—</span>
+                    ) : ts.completedLatest ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-emerald font-gta font-semibold tracking-wide">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Predat
+                      </span>
+                    ) : ts.missedCount >= 3 ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-rose-400 font-gta font-semibold tracking-wide" title={`${ts.missedCount} taskuri consecutive nepredate`}>
+                        <AlertTriangle className="h-3.5 w-3.5" /> {ts.missedCount} nepredate
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-xs text-gold font-gta font-semibold tracking-wide">
+                        <XCircle className="h-3.5 w-3.5" /> {ts.missedCount} nepred.
+                      </span>
+                    )}
+                  </td>
                   <td className="td text-sm text-muted">
                     {new Date(m.joinedAt).toLocaleDateString("ro-RO")}
                   </td>
@@ -135,7 +133,7 @@ export function MemberDirectoryDB({
             })}
             {!rows.length && (
               <tr>
-                <td colSpan={taskStatusMap ? 8 : 7} className="td py-10 text-center text-muted">
+                <td colSpan={8} className="td py-10 text-center text-muted">
                   Niciun membru nu corespunde. Șterge căutarea sau alege alt grad.
                 </td>
               </tr>
