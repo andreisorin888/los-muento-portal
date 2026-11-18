@@ -215,9 +215,9 @@ export default async function DashboardPage() {
               <p className="mt-0.5 text-xs text-muted">
                 {MONTH_NAMES[(monthlyWinner.month ?? 1) - 1]} {monthlyWinner.year}
               </p>
-              <p className="mt-4 font-display text-4xl font-extrabold">{monthlyWinner.winner.name}</p>
-              <p className="text-sm text-gold-soft">{monthlyWinner.winner.rankName}</p>
-              <p className="mt-2 font-display text-2xl font-bold text-gold">{monthlyWinner.points} <span className="text-sm font-normal text-muted">puncte</span></p>
+              <p className="mt-4 font-gta text-4xl font-bold uppercase tracking-widest">{monthlyWinner.winner.name}</p>
+              <p className="font-gta text-sm tracking-widest uppercase text-gold-soft">{monthlyWinner.winner.rankName}</p>
+              <p className="mt-2 font-gta text-3xl font-bold text-gold tracking-wider">{monthlyWinner.points} <span className="text-sm font-normal text-muted">puncte</span></p>
             </div>
           </section>
         ) : (
@@ -287,10 +287,10 @@ export default async function DashboardPage() {
                     {initials(m.name)}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">{m.name}</p>
-                    <p className="text-xs text-muted">{m.rankName}</p>
+                    <p className="truncate font-gta font-semibold uppercase tracking-wider text-sm">{m.name}</p>
+                    <p className="font-gta text-xs tracking-wider uppercase text-muted">{m.rankName}</p>
                   </div>
-                  <span className="text-sm font-bold">{m.points}</span>
+                  <span className="font-gta font-bold tracking-wider">{m.points}</span>
                 </li>
               ))}
             </ol>

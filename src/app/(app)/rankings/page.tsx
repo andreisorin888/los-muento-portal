@@ -73,7 +73,7 @@ export default async function RankingsPage() {
           <Crown className="h-12 w-12 shrink-0 text-gold" />
           <div>
             <p className="text-sm text-muted">Gangsterul Lunii — {MONTH_NAMES[month - 1]} {year}</p>
-            <p className="font-display text-3xl font-extrabold text-gold">{thisMonthWinner.winner.name}</p>
+            <p className="font-gta text-4xl font-bold uppercase tracking-widest text-gold">{thisMonthWinner.winner.name}</p>
             {thisMonthWinner.note && <p className="mt-1 text-sm text-muted">{thisMonthWinner.note}</p>}
           </div>
         </div>
@@ -100,10 +100,10 @@ export default async function RankingsPage() {
                     <td className="td">
                       {i === 0 ? <Trophy className="h-4 w-4 text-gold" /> : <span className="text-muted">{i + 1}</span>}
                     </td>
-                    <td className="td font-medium">{m.name}</td>
-                    <td className="td text-muted">{m.rankName}</td>
-                    <td className="td text-right font-display font-bold text-gold">{m.monthPoints}</td>
-                    <td className="td text-right text-muted">{m.points}</td>
+                    <td className="td font-gta font-semibold uppercase tracking-wider text-base">{m.name}</td>
+                    <td className="td font-gta tracking-wider uppercase text-sm text-muted">{m.rankName}</td>
+                    <td className="td text-right font-gta font-bold text-gold text-lg tracking-wider">{m.monthPoints}</td>
+                    <td className="td text-right font-gta text-muted tracking-wider">{m.points}</td>
                   </tr>
                 ))}
               </tbody>
@@ -119,8 +119,8 @@ export default async function RankingsPage() {
               <div key={w.id} className="flex items-center gap-3 rounded-xl border border-gold/20 bg-gold/5 p-4">
                 <Crown className="h-6 w-6 shrink-0 text-gold" />
                 <div>
-                  <p className="font-semibold">{w.winner.name}</p>
-                  <p className="text-xs text-muted">{MONTH_NAMES[w.month - 1]} {w.year}</p>
+                  <p className="font-gta font-semibold uppercase tracking-wider">{w.winner.name}</p>
+                  <p className="text-xs text-muted font-gta tracking-wide">{MONTH_NAMES[w.month - 1]} {w.year}</p>
                 </div>
               </div>
             ))}

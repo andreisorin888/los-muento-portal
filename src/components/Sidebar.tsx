@@ -184,8 +184,8 @@ export function Sidebar({
               </div>
             )}
             <div className="min-w-0 flex-1 lg:group-data-[collapsed=true]:hidden">
-              <p className="truncate text-sm font-semibold">{displayName || "—"}</p>
-              <p className="text-xs text-muted">{displayRank}</p>
+              <p className="truncate font-gta font-semibold uppercase tracking-wider text-sm leading-tight">{displayName || "—"}</p>
+              <p className="font-gta text-[11px] tracking-widest uppercase text-gold leading-tight">{displayRank}</p>
             </div>
             <Link
               href="/api/auth/signout"

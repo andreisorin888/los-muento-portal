@@ -20,6 +20,7 @@ const config: Config = {
       fontFamily: {
         display: ['"Big Shoulders Display"', "Impact", "system-ui", "sans-serif"],
         sans: ["Manrope", "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
+        gta: ["Rajdhani", "Manrope", "system-ui", "sans-serif"],
       },
       boxShadow: {
         neon: "0 0 0 1px rgba(255,46,147,.35), 0 0 24px -4px rgba(255,46,147,.45)",

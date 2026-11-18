@@ -88,12 +88,12 @@ export function MemberDirectoryDB({
             {rows.map((m) => (
               <tr key={m.id} className="border-t border-line hover:bg-white/[.03]">
                 <td className="td">
-                  <Link href={`/members/${m.id}`} className="flex items-center gap-3">
-                    <span className="block font-semibold hover:text-pink-soft">{m.name}</span>
-                    <span className="text-xs text-muted">{m.discordName} · {m.memberCode}</span>
+                  <Link href={`/members/${m.id}`} className="flex items-center gap-3 group/row">
+                    <span className="block font-gta font-semibold uppercase tracking-wider text-base group-hover/row:text-pink-soft">{m.name}</span>
+                    <span className="text-xs text-muted font-gta tracking-wide">{m.memberCode}</span>
                   </Link>
                 </td>
-                <td className="td">{m.rankName}</td>
+                <td className="td font-gta font-semibold tracking-wider uppercase text-sm">{m.rankName}</td>
                 <td className="td"><Badge tone={ROLE_TONE[m.role]}>{ROLE_LABELS[m.role]}</Badge></td>
                 <td className="td">{m.dept?.name ?? "—"}</td>
                 <td className="td">{m.crew?.name ?? "—"}</td>
