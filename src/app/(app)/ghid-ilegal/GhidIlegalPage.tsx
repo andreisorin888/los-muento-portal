@@ -5,6 +5,8 @@ import {
   Calculator, BookOpen, Map as MapIcon, Clock, Swords,
   CheckCircle2, ExternalLink, FlaskConical, Pickaxe,
   ArrowRightLeft, ShoppingBag, Wrench, ChevronRight,
+  Flame, Crosshair, Leaf, Zap, X, ZoomIn, MapPin,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -78,15 +80,58 @@ const WEAPONS = [
   { name: "MG",                mat: "60× Fier + 60× Aluminiu" },
 ];
 
-const MAPS = [
-  { src: "https://i.imgur.com/aK1Z6vw.png", label: "Zone Cayo",     large: true },
-  { src: "https://i.imgur.com/XhSCgkp.png", label: "Vespucii" },
-  { src: "https://i.imgur.com/wzRindk.png", label: "Groove" },
-  { src: "https://i.imgur.com/sQwspK4.png", label: "El Burro" },
-  { src: "https://i.imgur.com/4xobzHM.png", label: "Mina Ilegală" },
-  { src: "https://i.imgur.com/P6qnAe5.png", label: "Joint" },
-  { src: "https://i.imgur.com/qkivSiA.png", label: "Timbre LSD" },
-  { src: "https://i.imgur.com/0Ku3QnK.png", label: "Black Market" },
+type ZoneCard = {
+  id: string; name: string; accent: Accent; Icon: LucideIcon;
+  tagline: string; description: string;
+  items: { label: string; price: number }[];
+  mapSrc: string;
+};
+
+const ZONE_CARDS: ZoneCard[] = [
+  {
+    id: "groove", name: "Groove", accent: "emerald", Icon: Leaf,
+    tagline: "Droguri & Contrabandă",
+    description: "Distribuție LSD, cocaină, țigări de contrabandă și trabucuri ilegale.",
+    items: [
+      { label: "LSD",       price: 3400 },
+      { label: "Țigări",     price: 5400 },
+      { label: "Cocaină",    price: 2900 },
+      { label: "Trabucuri",  price: 1750 },
+    ],
+    mapSrc: "https://i.imgur.com/wzRindk.png",
+  },
+  {
+    id: "elburro", name: "El Burro", accent: "violet", Icon: Crosshair,
+    tagline: "Armament & Metafetamină",
+    description: "Componente arme, metafetamină de înaltă calitate și elemente de foc.",
+    items: [
+      { label: "Țeavă",          price: 13000 },
+      { label: "Mâner",           price: 13000 },
+      { label: "Element ×2",     price: 6500  },
+      { label: "Metafetamină",    price: 21000 },
+    ],
+    mapSrc: "https://i.imgur.com/sQwspK4.png",
+  },
+  {
+    id: "vespucii", name: "Vespucii", accent: "pink", Icon: Flame,
+    tagline: "Alcool & Cannabis",
+    description: "Alcool artizanal, marihuana premium și stick-uri de contrabandă.",
+    items: [
+      { label: "Alcool",    price: 12000 },
+      { label: "Marihuana", price: 1900  },
+      { label: "Stick",     price: 10000 },
+    ],
+    mapSrc: "https://i.imgur.com/XhSCgkp.png",
+  },
+];
+
+type SpecialLocation = { src: string; label: string; Icon: LucideIcon; color: string; desc: string };
+
+const SPECIAL_LOCS: SpecialLocation[] = [
+  { src: "https://i.imgur.com/4xobzHM.png", label: "Mina Ilegală", Icon: Pickaxe,     color: "text-gold",       desc: "100k taxă · 2 mat./piatră" },
+  { src: "https://i.imgur.com/P6qnAe5.png", label: "Joint",        Icon: Leaf,        color: "text-emerald",    desc: "20 Mar + 10 Filtre + 1 Foiță" },
+  { src: "https://i.imgur.com/qkivSiA.png", label: "Timbre LSD",   Icon: Zap,         color: "text-violet-400", desc: "5 min viteză + −15% recoil" },
+  { src: "https://i.imgur.com/0Ku3QnK.png", label: "Black Market", Icon: ShoppingBag, color: "text-rose-400",   desc: "Termită · Explozibil · Valiză" },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -387,6 +432,34 @@ function BlackMarketCalc() {
   );
 }
 
+// ─── Map lightbox ─────────────────────────────────────────────────────────────
+
+function MapLightbox({ src, label, onClose }: { src: string; label: string; onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/95 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div className="relative w-full max-w-5xl" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-gold" />
+            <span className="font-gta text-sm font-bold uppercase tracking-widest text-gold">{label}</span>
+          </div>
+          <button
+            onClick={onClose}
+            className="flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-xs text-muted hover:border-white/30 hover:text-white transition-colors"
+          >
+            <X className="h-3.5 w-3.5" /> Închide
+          </button>
+        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt={label} className="w-full rounded-xl shadow-2xl" />
+      </div>
+    </div>
+  );
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 type TabId = "calculatoare" | "ghid" | "harti";
@@ -400,6 +473,7 @@ const TABS: Array<{ id: TabId; label: string; Icon: React.ElementType }> = [
 export function GhidIlegalPage() {
   const [tab, setTab]     = useState<TabId>("calculatoare");
   const [bonus, setBonus] = useState(1);
+  const [lightbox, setLightbox] = useState<{ src: string; label: string } | null>(null);
 
   return (
     <div className="space-y-5">
@@ -599,45 +673,146 @@ export function GhidIlegalPage() {
 
       {/* ── Tab: Hărți ────────────────────────────────────────────────────── */}
       {tab === "harti" && (
-        <div className="space-y-4">
-          {/* Large map */}
-          {MAPS.filter((m) => m.large).map((m) => (
-            <a
-              key={m.src} href={m.src} target="_blank" rel="noopener noreferrer"
-              className="block panel p-3 group hover:border-gold/40 transition-colors"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={m.src} alt={m.label}
-                className="w-full max-h-96 rounded object-cover group-hover:opacity-90 transition-opacity"
-              />
-              <p className="mt-2 text-center font-gta font-semibold uppercase tracking-widest text-sm text-gold">
-                {m.label}
-              </p>
-            </a>
-          ))}
+        <div className="space-y-5">
+          {lightbox && (
+            <MapLightbox src={lightbox.src} label={lightbox.label} onClose={() => setLightbox(null)} />
+          )}
 
-          {/* Small maps grid */}
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {MAPS.filter((m) => !m.large).map((m) => (
-              <a
-                key={m.src} href={m.src} target="_blank" rel="noopener noreferrer"
-                className="block panel p-2 group hover:border-gold/40 transition-colors"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={m.src} alt={m.label}
-                  className="w-full h-36 rounded object-cover group-hover:opacity-90 transition-opacity"
-                />
-                <p className="mt-2 text-center font-gta text-xs font-semibold uppercase tracking-widest text-gold">
-                  {m.label}
+          {/* Hero — Cayo overview */}
+          <div
+            className="relative cursor-pointer overflow-hidden rounded-xl border border-gold/30 group"
+            onClick={() => setLightbox({ src: "https://i.imgur.com/aK1Z6vw.png", label: "Zone Cayo" })}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://i.imgur.com/aK1Z6vw.png"
+              alt="Zone Cayo"
+              className="w-full max-h-72 object-cover group-hover:scale-[1.02] transition-transform duration-500"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/30 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 flex items-end justify-between p-5">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-gold/80 font-gta">Hartă generală</p>
+                <p className="font-gta text-3xl font-bold uppercase tracking-widest text-white drop-shadow-lg">
+                  Zone Cayo
                 </p>
-              </a>
-            ))}
+              </div>
+              <div className="flex items-center gap-2 rounded-lg bg-white/10 px-3 py-1.5 text-sm text-white/80 backdrop-blur-sm border border-white/10 group-hover:bg-white/20 transition-colors">
+                <ZoomIn className="h-4 w-4" />
+                <span className="font-gta text-xs tracking-wide uppercase">Mărește</span>
+              </div>
+            </div>
           </div>
 
+          {/* Zone cards — 3 main zones */}
+          <section className="space-y-3">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted">Zone Principale</h2>
+            <div className="grid gap-4 md:grid-cols-3">
+              {ZONE_CARDS.map((z) => (
+                <div
+                  key={z.id}
+                  className={cn(
+                    "panel overflow-hidden border transition-shadow hover:shadow-lg",
+                    ACCENT_BORDER[z.accent],
+                  )}
+                >
+                  {/* Map thumbnail */}
+                  <div
+                    className="relative h-40 cursor-pointer overflow-hidden group/img"
+                    onClick={() => setLightbox({ src: z.mapSrc, label: z.name })}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={z.mapSrc}
+                      alt={z.name}
+                      className="h-full w-full object-cover group-hover/img:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-ink/80" />
+                    {/* Zoom icon overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity">
+                      <div className="rounded-full bg-black/60 p-3 backdrop-blur-sm">
+                        <ZoomIn className={cn("h-5 w-5", ACCENT_TEXT[z.accent])} />
+                      </div>
+                    </div>
+                    {/* Zone name on image */}
+                    <div className="absolute bottom-0 inset-x-0 px-4 pb-3 flex items-center justify-between">
+                      <span className={cn("font-gta text-xl font-bold uppercase tracking-widest drop-shadow-lg", ACCENT_TEXT[z.accent])}>
+                        {z.name}
+                      </span>
+                      <span className={cn("text-xs font-gta tracking-wide rounded px-2 py-0.5", ACCENT_BG[z.accent], ACCENT_TEXT[z.accent])}>
+                        {z.tagline}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Zone info */}
+                  <div className="p-4 space-y-3">
+                    {/* Icon + description */}
+                    <div className="flex items-start gap-3">
+                      <div className={cn("mt-0.5 rounded-xl p-2.5 shrink-0", ACCENT_BG[z.accent])}>
+                        <z.Icon className={cn("h-5 w-5", ACCENT_TEXT[z.accent])} />
+                      </div>
+                      <p className="text-xs text-muted leading-relaxed">{z.description}</p>
+                    </div>
+
+                    {/* Item prices */}
+                    <div className={cn("rounded-lg border p-3 space-y-1.5", ACCENT_BORDER[z.accent])}>
+                      {z.items.map((item) => (
+                        <div key={item.label} className="flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-1.5">
+                            <span className={cn("h-1 w-1 rounded-full shrink-0", ACCENT_TEXT[z.accent].replace("text-", "bg-"))} />
+                            <span className="text-white/80">{item.label}</span>
+                          </div>
+                          <span className={cn("font-gta font-semibold tracking-wide", ACCENT_TEXT[z.accent])}>
+                            {item.price.toLocaleString("ro-RO")} $
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Special locations */}
+          <section className="space-y-3">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted">Locații Speciale</h2>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              {SPECIAL_LOCS.map((loc) => (
+                <div
+                  key={loc.src}
+                  className="panel overflow-hidden cursor-pointer group hover:border-gold/40 transition-colors"
+                  onClick={() => setLightbox({ src: loc.src, label: loc.label })}
+                >
+                  <div className="relative h-32 overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={loc.src}
+                      alt={loc.label}
+                      className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-ink/70" />
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <ZoomIn className={cn("h-5 w-5 drop-shadow-lg", loc.color)} />
+                    </div>
+                  </div>
+                  <div className="p-3 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <loc.Icon className={cn("h-3.5 w-3.5 shrink-0", loc.color)} />
+                      <span className={cn("font-gta text-xs font-bold uppercase tracking-wide", loc.color)}>
+                        {loc.label}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted pl-5">{loc.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
           {/* Notion link */}
-          <div className="panel p-4 flex justify-center">
+          <div className="panel p-4 flex justify-center border border-gold/20">
             <a
               href="https://fortune-eyelash-38b.notion.site/Zonele-de-pe-harta-1ddd620b0f6c80c8951fc1680bbe45ac?pvs=149"
               target="_blank"
