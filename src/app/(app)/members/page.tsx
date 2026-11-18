@@ -30,6 +30,8 @@ export default async function MembersPage() {
   }
 
   const session = await getServerSession(authOptions);
+  const actorLevel = session?.user?.rankLevel ?? 0;
+  const canManage = actorLevel >= 60;
   const [{ members, total }, weeklyTasks] = await Promise.all([
     getMemberList(),
     db.task.findMany({
@@ -75,8 +77,10 @@ export default async function MembersPage() {
       <MemberDirectoryDB
         members={members}
         total={total}
-        actorLevel={session?.user?.rankLevel ?? 20}
+        actorLevel={actorLevel}
         taskStatusMap={taskStatusMap}
+        latestTaskId={weeklyTasks[0]?.id ?? null}
+        canManageTasks={canManage}
       />
     </div>
   );

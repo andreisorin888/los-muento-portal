@@ -1,12 +1,14 @@
 "use client";
 import Link from "next/link";
-import { useState, useMemo } from "react";
-import { Search, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
+import { useState, useMemo, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Search, CheckCircle2, XCircle, AlertTriangle, Square } from "lucide-react";
 import { Badge, Card } from "@/components/ui";
 import { RANKS } from "@/config/nav";
 import type { MemberRow } from "@/lib/members";
 import type { TaskWeeklyStatus } from "./page";
 import type { MemberRole, MemberStatus } from "@prisma/client";
+import { setTaskCompletionForMember } from "@/app/actions/tasks";
 
 const STATUS_LABELS: Record<MemberStatus, string> = {
   ACTIV: "Activ",
@@ -24,15 +26,29 @@ export function MemberDirectoryDB({
   total,
   actorLevel,
   taskStatusMap,
+  latestTaskId,
+  canManageTasks,
 }: {
   members: MemberRow[];
   total: number;
   actorLevel: number;
   taskStatusMap: Record<string, TaskWeeklyStatus>;
+  latestTaskId: string | null;
+  canManageTasks: boolean;
 }) {
   const [q, setQ] = useState("");
   const [rankFilter, setRankFilter] = useState("Toate");
   const [sort, setSort] = useState<"rank" | "name">("rank");
+  const [pending, startTransition] = useTransition();
+  const router = useRouter();
+
+  function toggleCompletion(memberId: string, completed: boolean) {
+    if (!latestTaskId) return;
+    startTransition(async () => {
+      await setTaskCompletionForMember(memberId, latestTaskId, completed);
+      router.refresh();
+    });
+  }
 
   const rows = useMemo(() => {
     let r = members.filter(
@@ -109,7 +125,35 @@ export function MemberDirectoryDB({
                   <td className="td">{m.crew?.name ?? "—"}</td>
                   <td className="td"><Badge>{STATUS_LABELS[m.status]}</Badge></td>
                   <td className="td">
-                    {!ts ? (
+                    {canManageTasks && latestTaskId ? (
+                      <button
+                        onClick={() => toggleCompletion(m.id, !ts?.completedLatest)}
+                        disabled={pending}
+                        title={ts?.completedLatest ? "Bifat ca predat — apasă pentru a anula" : "Apasă pentru a bifa ca predat"}
+                        className={`inline-flex items-center gap-1.5 rounded px-2 py-1 text-xs font-gta font-semibold tracking-wide transition-colors hover:bg-white/10 disabled:opacity-50 ${
+                          ts?.completedLatest
+                            ? "text-emerald"
+                            : ts?.missedCount && ts.missedCount >= 3
+                            ? "text-rose-400"
+                            : "text-gold"
+                        }`}
+                      >
+                        {ts?.completedLatest ? (
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                        ) : ts?.missedCount && ts.missedCount >= 3 ? (
+                          <AlertTriangle className="h-3.5 w-3.5" />
+                        ) : (
+                          <Square className="h-3.5 w-3.5" />
+                        )}
+                        {ts?.completedLatest
+                          ? "Predat"
+                          : ts?.missedCount && ts.missedCount >= 3
+                          ? `${ts.missedCount} nep.`
+                          : ts?.missedCount
+                          ? `${ts.missedCount} nep.`
+                          : "Nepredat"}
+                      </button>
+                    ) : !ts ? (
                       <span className="text-xs text-muted">—</span>
                     ) : ts.completedLatest ? (
                       <span className="inline-flex items-center gap-1 text-xs text-emerald font-gta font-semibold tracking-wide">

@@ -104,6 +104,36 @@ export async function completeTask(
   }
 }
 
+export async function setTaskCompletionForMember(
+  memberId: string,
+  taskId: string,
+  completed: boolean,
+): Promise<{ error?: string }> {
+  try {
+    const actor = await getActor();
+    requirePermission(canManageTasks(actor));
+
+    const task = await db.task.findUnique({ where: { id: taskId } });
+    if (!task) return { error: "Sarcina nu a fost găsită." };
+
+    if (completed) {
+      await db.taskCompletion.upsert({
+        where: { taskId_memberId: { taskId, memberId } },
+        update: {},
+        create: { taskId, memberId },
+      });
+    } else {
+      await db.taskCompletion.deleteMany({ where: { taskId, memberId } });
+    }
+
+    revalidatePath("/members");
+    revalidatePath("/tasks");
+    return {};
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Eroare necunoscută." };
+  }
+}
+
 export async function updateTaskStatus(
   taskId: string,
   status: TaskStatus,
