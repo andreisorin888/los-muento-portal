@@ -18,6 +18,7 @@ type Props = {
   textureUrl: string | null;
   showDemo: boolean;
   userLevel: number;
+  userRole: "LEGAL" | "ILEGAL";
   userName: string;
   userRank: string;
   userImage: string | null;
@@ -48,6 +49,7 @@ export function Sidebar({
   textureUrl,
   showDemo,
   userLevel,
+  userRole,
   userName,
   userRank,
   userImage,
@@ -104,7 +106,7 @@ export function Sidebar({
 
         <nav className="relative flex-1 overflow-y-auto px-3 py-4" aria-label="Navigare principală">
           {GROUPS.map((g) => {
-            const items = MODULES.filter((m) => m.group === g && level >= m.minLevel);
+            const items = MODULES.filter((m) => m.group === g && level >= m.minLevel && (!m.illegalOnly || userRole === "ILEGAL"));
             if (!items.length) return null;
             const isClosed = closed[g];
             return (

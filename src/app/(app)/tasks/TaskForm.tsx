@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 import { Modal } from "@/components/Modal";
 import { Field } from "@/components/ui";
 import { createTask } from "@/app/actions/tasks";
-import type { AssigneeType, TaskPriority } from "@prisma/client";
+import type { AssigneeType, MemberRole, TaskPriority } from "@prisma/client";
 
 type MemberOpt = { id: string; name: string; memberCode: string };
 type DeptOpt = { id: string; name: string };
@@ -40,12 +40,13 @@ export function TaskForm({
   const [dueDate, setDueDate] = useState("");
   const [assigneeType, setAssigneeType] = useState<AssigneeType>("TOTI");
   const [assigneeId, setAssigneeId] = useState("");
+  const [role, setRole] = useState<MemberRole>("ILEGAL");
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
 
   function close() {
     setOpen(false); setTitle(""); setDescription(""); setPriority("NORMAL");
-    setDueDate(""); setAssigneeType("TOTI"); setAssigneeId(""); setError("");
+    setDueDate(""); setAssigneeType("TOTI"); setAssigneeId(""); setRole("ILEGAL"); setError("");
   }
 
   function submit(e: React.FormEvent) {
@@ -58,6 +59,7 @@ export function TaskForm({
         dueDate: dueDate || undefined,
         assigneeType,
         assigneeId: (assigneeType !== "TOTI" ? assigneeId : undefined),
+        role,
       });
       if (r.error) { setError(r.error); return; }
       close();
@@ -116,6 +118,12 @@ export function TaskForm({
               </select>
             </Field>
           )}
+          <Field label="Vizibilitate">
+            <select className="input" value={role} onChange={(e) => setRole(e.target.value as MemberRole)}>
+              <option value="ILEGAL">Ilegal (toți membrii)</option>
+              <option value="LEGAL">Legal (doar membrii legali)</option>
+            </select>
+          </Field>
           {error && <p className="text-sm text-rose-400">{error}</p>}
           <div className="flex justify-end gap-2 pt-1">
             <button type="button" className="btn-ghost" onClick={close} disabled={pending}>Anulează</button>

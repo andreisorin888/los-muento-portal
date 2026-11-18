@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Badge, Card } from "@/components/ui";
 import { canManageTasks } from "@/lib/permissions";
-import type { AssigneeType, MemberStatus, TaskPriority, TaskStatus } from "@prisma/client";
+import type { AssigneeType, MemberRole, MemberStatus, TaskPriority, TaskStatus } from "@prisma/client";
 import { TaskForm } from "./TaskForm";
 import { CompleteBtn } from "./CompleteBtn";
 import { Clock, AlertTriangle } from "lucide-react";
@@ -40,11 +40,15 @@ export default async function TasksPage() {
   const session = await getServerSession(authOptions);
   const actorId = session?.user?.memberId ?? "";
   const actorLevel = session?.user?.rankLevel ?? 0;
+  const memberRole: MemberRole = (session?.user?.memberRole as MemberRole) ?? "ILEGAL";
   const actor = { id: actorId, rankLevel: actorLevel, status: "ACTIV" as MemberStatus };
   const canCreate = canManageTasks(actor);
 
+  const roleFilter = memberRole === "LEGAL" ? { role: "LEGAL" as MemberRole } : {};
+
   const [tasks, members, depts] = await Promise.all([
     db.task.findMany({
+      where: roleFilter,
       include: {
         createdBy: { select: { name: true } },
         completions: { select: { memberId: true, createdAt: true } },

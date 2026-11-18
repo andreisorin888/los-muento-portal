@@ -10,6 +10,7 @@ type Props = {
   textureUrl: string | null;
   showDemo: boolean;
   userLevel: number;
+  userRole: "LEGAL" | "ILEGAL";
   userName: string;
   userRank: string;
   userImage: string | null;
@@ -22,6 +23,7 @@ export function AppShell({
   textureUrl,
   showDemo,
   userLevel,
+  userRole,
   userName,
   userRank,
   userImage,
@@ -42,6 +44,7 @@ export function AppShell({
           textureUrl={textureUrl}
           showDemo={showDemo}
           userLevel={userLevel}
+          userRole={userRole}
           userName={userName}
           userRank={userRank}
           userImage={userImage}

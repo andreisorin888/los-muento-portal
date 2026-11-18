@@ -6,7 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { canManageTasks, requirePermission, type ActorInfo } from "@/lib/permissions";
 import { auditLogTx } from "@/lib/audit";
-import type { AssigneeType, TaskPriority, TaskStatus } from "@prisma/client";
+import type { AssigneeType, MemberRole, TaskPriority, TaskStatus } from "@prisma/client";
 
 async function getActor(): Promise<ActorInfo> {
   const session = await getServerSession(authOptions);
@@ -26,6 +26,7 @@ export async function createTask(data: {
   dueDate?: string;
   assigneeType: AssigneeType;
   assigneeId?: string;
+  role?: MemberRole;
 }): Promise<{ error?: string }> {
   try {
     const actor = await getActor();
@@ -47,6 +48,7 @@ export async function createTask(data: {
           dueDate,
           assigneeType: data.assigneeType,
           assigneeId: data.assigneeId || null,
+          role: data.role ?? "ILEGAL",
           createdById: actor.id,
         },
       });

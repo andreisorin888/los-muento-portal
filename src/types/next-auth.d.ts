@@ -1,5 +1,5 @@
 import "next-auth";
-import type { MemberStatus } from "@prisma/client";
+import type { MemberRole, MemberStatus } from "@prisma/client";
 
 declare module "next-auth" {
   interface Session {
@@ -13,6 +13,7 @@ declare module "next-auth" {
       rankLevel?: number;
       rankName?: string | null;
       memberStatus?: MemberStatus | null;
+      memberRole?: MemberRole | null;
     };
   }
 }
@@ -25,5 +26,6 @@ declare module "next-auth/jwt" {
     rankLevel?: number;
     rankName?: string | null;
     memberStatus?: MemberStatus | null;
+    memberRole?: MemberRole | null;
   }
 }

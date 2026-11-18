@@ -378,6 +378,7 @@ model Task {
   assigneeType AssigneeType
   assigneeId   String?
   status       TaskStatus   @default(ACTIV)
+  role         MemberRole   @default(ILEGAL)
   createdById  String
 
   createdBy   Member           @relation("TaskCreator", fields: [createdById], references: [id])

@@ -24,6 +24,7 @@ export type ModuleDef = {
   label: string;
   icon: LucideIcon;
   minLevel: number;
+  illegalOnly?: true;
   group: "Prezentare" | "Operațiuni" | "Familia" | "Analiză" | "Administrare";
   phase: number;
   summary: string;
@@ -48,7 +49,7 @@ export const MODULES: ModuleDef[] = [
     table: { title: "Taskuri", columns: [{ key: "title", label: "Task" }, { key: "assignee", label: "Atribuit lui" }, { key: "priority", label: "Prioritate", kind: "badge" }, { key: "deadline", label: "Termen" }, { key: "status", label: "Stare", kind: "badge" }], rows: demo.tasks },
   },
   {
-    slug: "chest", label: "Seif și inventar", icon: Package, minLevel: 20, group: "Operațiuni", phase: 4,
+    slug: "chest", label: "Seif și inventar", icon: Package, minLevel: 20, illegalOnly: true, group: "Operațiuni", phase: 4,
     summary: "Mai multe seifuri, tranzacții cu mai multe obiecte și stocuri calculate doar din tranzacții aprobate.",
     scope: ["Depunere, retragere, transfer și corecție", "Doar tranzacțiile aprobate modifică stocul", "Alerte de stoc redus și rapoarte de discrepanțe", "Corecțiile cer un motiv și sunt auditate"],
     table: { title: "Tranzacții recente cu seiful", columns: [{ key: "ref", label: "Ref.", kind: "mono" }, { key: "member", label: "Membru" }, { key: "type", label: "Tip" }, { key: "items", label: "Obiecte" }, { key: "status", label: "Stare", kind: "badge" }], rows: demo.chestTx },
@@ -61,12 +62,12 @@ export const MODULES: ModuleDef[] = [
     table: { title: "Teritorii", columns: [{ key: "name", label: "Teritoriu" }, { key: "status", label: "Stare", kind: "badge" }, { key: "lead", label: "Responsabil" }, { key: "changed", label: "Ultima schimbare" }], rows: demo.territories },
   },
   {
-    slug: "robberies", label: "Jafuri", icon: Siren, minLevel: 20, group: "Operațiuni", phase: 4,
+    slug: "robberies", label: "Jafuri", icon: Siren, minLevel: 20, illegalOnly: true, group: "Operațiuni", phase: 4,
     summary: "Rapoarte de evenimente RP cu participanți, recompense și rate de succes.",
     scope: ["Numere de referință și categorii configurabile", "Distribuirea recompensei pe participant", "Statistici de succes și eșec"],
     table: { title: "Rapoarte recente", columns: [{ key: "ref", label: "Ref.", kind: "mono" }, { key: "type", label: "Tip" }, { key: "leader", label: "Lider" }, { key: "reward", label: "Recompensă" }, { key: "status", label: "Stare", kind: "badge" }], rows: demo.robberies },
   },
-  { slug: "armory", label: "Stash", icon: Crosshair, minLevel: 20, group: "Operațiuni", phase: 4, summary: "Evidența armelor și muniției din joc pentru serverul de roleplay.", scope: ["Atribuiri, returnări și transferuri de arme", "Stoc de muniție și alocări pe membri", "Membrii văd doar alocările proprii"] },
+  { slug: "armory", label: "Stash", icon: Crosshair, minLevel: 20, illegalOnly: true, group: "Operațiuni", phase: 4, summary: "Evidența armelor și muniției din joc pentru serverul de roleplay.", scope: ["Atribuiri, returnări și transferuri de arme", "Stoc de muniție și alocări pe membri", "Membrii văd doar alocările proprii"] },
   { slug: "recruitment", label: "Recrutare", icon: UserPlus, minLevel: 60, group: "Familia", phase: 3, summary: "Recruți, perioadă de probă și performanța recrutorilor.", scope: ["Registru de recruți cu recrutorul", "Flux de probă și aprobare", "Statistici de recrutare pe membru"] },
   {
     slug: "events", label: "Calendar evenimente", icon: CalendarDays, minLevel: 20, group: "Familia", phase: 4,

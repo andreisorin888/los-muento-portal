@@ -14,6 +14,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       textureUrl={getAssetUrl("sidebarTexture")}
       showDemo={site.showDemo}
       userLevel={user?.rankLevel ?? 20}
+      userRole={user?.memberRole ?? "ILEGAL"}
       userName={user?.name ?? ""}
       userRank={user?.rankName ?? "Associate"}
       userImage={user?.image ?? null}

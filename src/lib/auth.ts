@@ -33,13 +33,14 @@ export const authOptions: NextAuthOptions = {
       // Always re-fetch so rank/status changes are reflected immediately
       const member = await db.member.findUnique({
         where: { userId },
-        select: { id: true, memberCode: true, rankLevel: true, rankName: true, status: true },
+        select: { id: true, memberCode: true, rankLevel: true, rankName: true, status: true, role: true },
       });
       token.memberId = member?.id ?? null;
       token.memberCode = member?.memberCode ?? null;
       token.rankLevel = member?.rankLevel ?? 0;
       token.rankName = member?.rankName ?? null;
       token.memberStatus = member?.status ?? null;
+      token.memberRole = member?.role ?? null;
 
       return token;
     },
@@ -53,6 +54,7 @@ export const authOptions: NextAuthOptions = {
         rankLevel: token.rankLevel ?? 0,
         rankName: token.rankName ?? null,
         memberStatus: token.memberStatus ?? null,
+        memberRole: token.memberRole ?? null,
       },
     }),
   },

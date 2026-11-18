@@ -25,6 +25,14 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/pending", req.url));
   }
 
+  const illegalOnlyRoutes = ["/chest", "/robberies", "/armory"];
+  if (
+    token.memberRole === "LEGAL" &&
+    illegalOnlyRoutes.some((r) => req.nextUrl.pathname === r || req.nextUrl.pathname.startsWith(r + "/"))
+  ) {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
+  }
+
   return NextResponse.next();
 }
 
