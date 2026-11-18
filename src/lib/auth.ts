@@ -30,17 +30,16 @@ export const authOptions: NextAuthOptions = {
 
       token.userId = userId;
 
-      if (user || trigger === "update") {
-        const member = await db.member.findUnique({
-          where: { userId },
-          select: { id: true, memberCode: true, rankLevel: true, rankName: true, status: true },
-        });
-        token.memberId = member?.id ?? null;
-        token.memberCode = member?.memberCode ?? null;
-        token.rankLevel = member?.rankLevel ?? 0;
-        token.rankName = member?.rankName ?? null;
-        token.memberStatus = member?.status ?? null;
-      }
+      // Always re-fetch so rank/status changes are reflected immediately
+      const member = await db.member.findUnique({
+        where: { userId },
+        select: { id: true, memberCode: true, rankLevel: true, rankName: true, status: true },
+      });
+      token.memberId = member?.id ?? null;
+      token.memberCode = member?.memberCode ?? null;
+      token.rankLevel = member?.rankLevel ?? 0;
+      token.rankName = member?.rankName ?? null;
+      token.memberStatus = member?.status ?? null;
 
       return token;
     },
