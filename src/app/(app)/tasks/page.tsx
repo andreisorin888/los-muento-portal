@@ -7,7 +7,7 @@ import { canManageTasks } from "@/lib/permissions";
 import type { AssigneeType, MemberRole, MemberStatus, TaskPriority, TaskStatus } from "@prisma/client";
 import { TaskForm } from "./TaskForm";
 import { CompleteBtn } from "./CompleteBtn";
-import { Clock, AlertTriangle } from "lucide-react";
+import { Clock, AlertTriangle, CheckCircle2, XCircle, MinusCircle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Taskuri" };
@@ -46,7 +46,7 @@ export default async function TasksPage() {
 
   const roleFilter = memberRole === "LEGAL" ? { role: "LEGAL" as MemberRole } : {};
 
-  const [tasks, members, depts] = await Promise.all([
+  const [tasks, members, depts, completions] = await Promise.all([
     db.task.findMany({
       where: roleFilter,
       include: {
@@ -64,6 +64,20 @@ export default async function TasksPage() {
       : Promise.resolve([]),
     canCreate
       ? db.department.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } })
+      : Promise.resolve([]),
+    canCreate
+      ? db.taskCompletion.findMany({
+          where: { task: roleFilter },
+          select: {
+            id: true,
+            createdAt: true,
+            note: true,
+            member: { select: { id: true, name: true, memberCode: true } },
+            task: { select: { id: true, title: true, dueDate: true } },
+          },
+          orderBy: { createdAt: "desc" },
+          take: 150,
+        })
       : Promise.resolve([]),
   ]);
 
@@ -151,6 +165,78 @@ export default async function TasksPage() {
               </div>
             </div>
           ))}
+        </section>
+      )}
+
+      {canCreate && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted">
+              Predări ({completions.length})
+            </h2>
+          </div>
+          {completions.length === 0 ? (
+            <Card title="Predări">
+              <p className="text-sm text-muted">Nicio predare înregistrată încă.</p>
+            </Card>
+          ) : (
+            <Card pad={false}>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[640px] text-sm">
+                  <thead className="bg-white/[.03]">
+                    <tr>
+                      <th className="th">Membru</th>
+                      <th className="th">Task</th>
+                      <th className="th">Predat la</th>
+                      <th className="th">Termen</th>
+                      <th className="th">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {completions.map((c) => {
+                      const dueDate = c.task.dueDate;
+                      const late = dueDate && c.createdAt > dueDate;
+                      const noDeadline = !dueDate;
+                      return (
+                        <tr key={c.id} className="border-t border-line hover:bg-white/[.02]">
+                          <td className="td">
+                            <span className="font-gta font-semibold uppercase tracking-wider">{c.member.name}</span>
+                            <span className="ml-2 text-xs text-muted">{c.member.memberCode}</span>
+                          </td>
+                          <td className="td font-medium">{c.task.title}</td>
+                          <td className="td text-muted">
+                            {c.createdAt.toLocaleDateString("ro-RO")}{" "}
+                            <span className="text-xs">{c.createdAt.toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit" })}</span>
+                          </td>
+                          <td className="td text-muted">
+                            {dueDate ? new Date(dueDate).toLocaleDateString("ro-RO") : <span className="text-muted/50">—</span>}
+                          </td>
+                          <td className="td">
+                            {noDeadline ? (
+                              <span className="inline-flex items-center gap-1.5 text-xs text-muted">
+                                <MinusCircle className="h-3.5 w-3.5" /> Fără termen
+                              </span>
+                            ) : late ? (
+                              <span className="inline-flex items-center gap-1.5 text-xs text-rose-400">
+                                <XCircle className="h-3.5 w-3.5" /> Întârziat
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 text-xs text-emerald">
+                                <CheckCircle2 className="h-3.5 w-3.5" /> La timp
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              {completions.length === 150 && (
+                <p className="border-t border-line px-4 py-3 text-xs text-muted">Se afișează ultimele 150 de predări.</p>
+              )}
+            </Card>
+          )}
         </section>
       )}
     </div>
