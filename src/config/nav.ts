@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Users, Activity, ClipboardList, Package, Wallet, Map, Siren, Crosshair,
   UserPlus, CalendarDays, Trophy, BarChart3, Megaphone, ShieldCheck, Settings, ScrollText,
-  Vote, GraduationCap, Library,
+  Vote, GraduationCap, Library, FlaskConical,
   type LucideIcon,
 } from "lucide-react";
 import * as demo from "@/lib/demo-data";
@@ -86,6 +86,9 @@ export const MODULES: ModuleDef[] = [
   { slug: "management", label: "Conducere", icon: ShieldCheck, minLevel: 90, group: "Administrare", phase: 5, summary: "Zonă restricționată pentru evaluări, note interne și decizii.", scope: ["Ascunsă din căutarea membrilor", "Acces configurabil", "Accesul la date sensibile este auditat"] },
   { slug: "configuration", label: "Configurare", icon: Settings, minLevel: 100, group: "Administrare", phase: 2, summary: "Grade, permisiuni, categorii, canale Discord și altele.", scope: ["Setările schimbă comportamentul real al aplicației", "Asistent de configurare inițială", "ID-uri de canale și roluri Discord"] },
   { slug: "audit", label: "Jurnal de audit", icon: ScrollText, minLevel: 90, group: "Administrare", phase: 5, summary: "Un registru rezistent la modificări al acțiunilor importante.", scope: ["Valori anterioare și noi", "Filtre după utilizator, acțiune și entitate", "Fără editări sau ștergeri"] },
+
+  // Phase 7
+  { slug: "ghid-ilegal", label: "Ghid Ilegal", icon: FlaskConical, minLevel: 20, illegalOnly: true, group: "Operațiuni", phase: 7, summary: "Calculatoare zone, producție, spălare bani și ghid complet pentru activitățile ilegale.", scope: ["Zone Livrare cu bonus orar (Groove, El Burro, Vespucii)", "Calculatoare Producție: Alcool, Metafetamină, Componente", "Spălare bani și Black Market", "Cerințe ore joburi, kit mafie, crafting armament, hărți"] },
 
   // Phase 6
   { slug: "polls", label: "Sondaje", icon: Vote, minLevel: 20, group: "Familia", phase: 6, summary: "Votează pe decizii ale organizației.", scope: ["Opțiuni multiple, deadline de vot", "Rezultate vizibile după vot", "Capo+ creează sondaje", "Sondaje targetate pe grade"] },
