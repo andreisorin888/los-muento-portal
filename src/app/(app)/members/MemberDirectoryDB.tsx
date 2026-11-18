@@ -1,10 +1,11 @@
 "use client";
 import Link from "next/link";
 import { useState, useMemo } from "react";
-import { Search } from "lucide-react";
+import { Search, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
 import { Badge, Card } from "@/components/ui";
 import { RANKS } from "@/config/nav";
 import type { MemberRow } from "@/lib/members";
+import type { TaskWeeklyStatus } from "./page";
 import type { MemberRole, MemberStatus } from "@prisma/client";
 
 const STATUS_LABELS: Record<MemberStatus, string> = {
@@ -22,10 +23,12 @@ export function MemberDirectoryDB({
   members,
   total,
   actorLevel,
+  taskStatusMap,
 }: {
   members: MemberRow[];
   total: number;
   actorLevel: number;
+  taskStatusMap?: Record<string, TaskWeeklyStatus>;
 }) {
   const [q, setQ] = useState("");
   const [rankFilter, setRankFilter] = useState("Toate");
@@ -79,35 +82,60 @@ export function MemberDirectoryDB({
         <table className="w-full min-w-[820px]">
           <thead className="bg-white/[.03]">
             <tr>
-              {["Membru", "Grad", "Rol", "Departament", "Echipă", "Stare", "Înscris la"].map((h) => (
-                <th key={h} className="th">{h}</th>
-              ))}
+              <th className="th">Membru</th>
+              <th className="th">Grad</th>
+              <th className="th">Rol</th>
+              <th className="th">Departament</th>
+              <th className="th">Echipă</th>
+              <th className="th">Stare</th>
+              {taskStatusMap && <th className="th">Task săpt.</th>}
+              <th className="th">Înscris la</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((m) => (
-              <tr key={m.id} className="border-t border-line hover:bg-white/[.03]">
-                <td className="td">
-                  <Link href={`/members/${m.id}`} className="flex items-center gap-3 group/row">
-                    <span className="block font-gta font-semibold uppercase tracking-wider text-base group-hover/row:text-pink-soft">{m.name}</span>
-                    <span className="text-xs text-muted font-gta tracking-wide">{m.memberCode}</span>
-                  </Link>
-                </td>
-                <td className="td font-gta font-semibold tracking-wider uppercase text-sm">{m.rankName}</td>
-                <td className="td"><Badge tone={ROLE_TONE[m.role]}>{ROLE_LABELS[m.role]}</Badge></td>
-                <td className="td">{m.dept?.name ?? "—"}</td>
-                <td className="td">{m.crew?.name ?? "—"}</td>
-                <td className="td">
-                  <Badge>{STATUS_LABELS[m.status]}</Badge>
-                </td>
-                <td className="td text-sm text-muted">
-                  {new Date(m.joinedAt).toLocaleDateString("ro-RO")}
-                </td>
-              </tr>
-            ))}
+            {rows.map((m) => {
+              const ts = taskStatusMap?.[m.id];
+              return (
+                <tr key={m.id} className="border-t border-line hover:bg-white/[.03]">
+                  <td className="td">
+                    <Link href={`/members/${m.id}`} className="flex items-center gap-3 group/row">
+                      <span className="block font-gta font-semibold uppercase tracking-wider text-base group-hover/row:text-pink-soft">{m.name}</span>
+                      <span className="text-xs text-muted font-gta tracking-wide">{m.memberCode}</span>
+                    </Link>
+                  </td>
+                  <td className="td font-gta font-semibold tracking-wider uppercase text-sm">{m.rankName}</td>
+                  <td className="td"><Badge tone={ROLE_TONE[m.role]}>{ROLE_LABELS[m.role]}</Badge></td>
+                  <td className="td">{m.dept?.name ?? "—"}</td>
+                  <td className="td">{m.crew?.name ?? "—"}</td>
+                  <td className="td"><Badge>{STATUS_LABELS[m.status]}</Badge></td>
+                  {taskStatusMap && (
+                    <td className="td">
+                      {!ts ? (
+                        <span className="text-xs text-muted">—</span>
+                      ) : ts.completedLatest ? (
+                        <span className="inline-flex items-center gap-1 text-xs text-emerald font-gta font-semibold tracking-wide">
+                          <CheckCircle2 className="h-3.5 w-3.5" /> Predat
+                        </span>
+                      ) : ts.missedCount >= 3 ? (
+                        <span className="inline-flex items-center gap-1 text-xs text-rose-400 font-gta font-semibold tracking-wide" title={`${ts.missedCount} taskuri consecutive nepredate`}>
+                          <AlertTriangle className="h-3.5 w-3.5" /> {ts.missedCount} nepredate
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-xs text-gold font-gta font-semibold tracking-wide">
+                          <XCircle className="h-3.5 w-3.5" /> {ts.missedCount} nepred.
+                        </span>
+                      )}
+                    </td>
+                  )}
+                  <td className="td text-sm text-muted">
+                    {new Date(m.joinedAt).toLocaleDateString("ro-RO")}
+                  </td>
+                </tr>
+              );
+            })}
             {!rows.length && (
               <tr>
-                <td colSpan={7} className="td py-10 text-center text-muted">
+                <td colSpan={taskStatusMap ? 8 : 7} className="td py-10 text-center text-muted">
                   Niciun membru nu corespunde. Șterge căutarea sau alege alt grad.
                 </td>
               </tr>

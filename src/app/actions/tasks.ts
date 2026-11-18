@@ -78,14 +78,26 @@ export async function completeTask(
     if (task.status !== "ACTIV") return { error: "Sarcina nu mai este activă." };
 
     await db.$transaction(async (tx) => {
+      const existing = await tx.taskCompletion.findUnique({
+        where: { taskId_memberId: { taskId, memberId } },
+      });
       await tx.taskCompletion.upsert({
         where: { taskId_memberId: { taskId, memberId } },
         update: { note: note || null },
         create: { taskId, memberId, note: note || null },
       });
+      if (!existing) {
+        const cat = await tx.activityCategory.findUnique({ where: { slug: "PREDARE_TASK" } });
+        const pts = cat?.points ?? 5;
+        await tx.activity.create({
+          data: { memberId, title: `Task: ${task.title}`, type: "PREDARE_TASK", points: pts },
+        });
+        await tx.member.update({ where: { id: memberId }, data: { points: { increment: pts } } });
+      }
     });
 
     revalidatePath("/tasks");
+    revalidatePath("/members");
     return {};
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Eroare necunoscută." };
