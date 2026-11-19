@@ -20,10 +20,10 @@ export default async function Page() {
 
   const isManager = actor.rankLevel >= 60;
 
-  const [myOrders, allOrders, sellers] = await Promise.all([
+  const [myOrders, allOrders] = await Promise.all([
     prisma.order.findMany({
       where: { buyerId: actor.id, status: { not: "ARHIVATA" } },
-      include: { seller: { select: { id: true, name: true, rankName: true } } },
+      include: { buyer: { select: { id: true, name: true, rankName: true } } },
       orderBy: { createdAt: "desc" },
     }),
     isManager
@@ -31,21 +31,10 @@ export default async function Page() {
           where: { status: { not: "ARHIVATA" } },
           include: {
             buyer: { select: { id: true, name: true, rankName: true } },
-            seller: { select: { id: true, name: true, rankName: true } },
           },
           orderBy: { createdAt: "desc" },
         })
       : [],
-    prisma.member.findMany({
-      where: { role: "ILEGAL", status: "ACTIV", stashListings: { some: {} } },
-      select: {
-        id: true,
-        name: true,
-        rankName: true,
-        stashListings: { select: { item: true, quantity: true, price: true } },
-      },
-      orderBy: { name: "asc" },
-    }),
   ]);
 
   return (
@@ -54,7 +43,6 @@ export default async function Page() {
       isManager={isManager}
       myOrders={myOrders}
       allOrders={allOrders}
-      sellers={sellers}
     />
   );
 }

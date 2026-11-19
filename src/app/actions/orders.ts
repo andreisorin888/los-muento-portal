@@ -20,28 +20,19 @@ async function getActor() {
 }
 
 export async function createOrder(data: {
-  sellerId: string;
   item: StashItem;
   quantity: number;
   notes?: string;
 }) {
   const actor = await getActor();
-
   if (actor.role !== "ILEGAL") throw new Error("Doar membrii ILEGAL pot plasa comenzi");
   if (data.quantity < 1) throw new Error("Cantitate invalidă");
-
-  const sellerListing = await prisma.stashListing.findUnique({
-    where: { memberId_item: { memberId: data.sellerId, item: data.item } },
-  });
-  const price = sellerListing?.price ?? 0;
 
   await prisma.order.create({
     data: {
       buyerId: actor.id,
-      sellerId: data.sellerId,
       item: data.item,
       quantity: data.quantity,
-      price,
       notes: data.notes ?? null,
       status: "DEPUSA",
     },
@@ -86,7 +77,7 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
             memberId: order.buyerId,
             item: order.item,
             quantity: order.quantity,
-            price: order.price,
+            price: 0,
           },
         });
       }
@@ -98,42 +89,4 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
 
 export async function archiveOrder(orderId: string) {
   return updateOrderStatus(orderId, "ARHIVATA");
-}
-
-export async function getMyOrders() {
-  const actor = await getActor();
-  return prisma.order.findMany({
-    where: { buyerId: actor.id, status: { not: "ARHIVATA" } },
-    include: {
-      seller: { select: { id: true, name: true, rankName: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-}
-
-export async function getAllOrders() {
-  const actor = await getActor();
-  if (actor.rankLevel < 60) throw new Error("Acces interzis");
-  return prisma.order.findMany({
-    where: { status: { not: "ARHIVATA" } },
-    include: {
-      buyer: { select: { id: true, name: true, rankName: true } },
-      seller: { select: { id: true, name: true, rankName: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-}
-
-export async function getArchivedOrders() {
-  const actor = await getActor();
-  if (actor.rankLevel < 60) throw new Error("Acces interzis");
-  return prisma.order.findMany({
-    where: { status: "ARHIVATA" },
-    include: {
-      buyer: { select: { id: true, name: true, rankName: true } },
-      seller: { select: { id: true, name: true, rankName: true } },
-    },
-    orderBy: { updatedAt: "desc" },
-    take: 50,
-  });
 }

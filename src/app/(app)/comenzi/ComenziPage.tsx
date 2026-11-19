@@ -4,45 +4,29 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   ShoppingCart, Clock, CheckCircle2, AlertCircle, Archive,
-  ChevronDown, Plus, Package,
+  Plus, Package,
 } from "lucide-react";
 import { OrderStatus, StashItem } from "@prisma/client";
 import { STASH_ITEMS } from "@/lib/stash-items";
 import { createOrder, updateOrderStatus } from "@/app/actions/orders";
 
 type Member = { id: string; name: string; rankName: string };
-type Listing = { item: StashItem; quantity: number; price: number };
-type Seller = Member & { stashListings: Listing[] };
 
-type OrderWithSeller = {
+type Order = {
   id: string;
   item: StashItem;
   quantity: number;
-  price: number;
-  status: OrderStatus;
-  notes: string | null;
-  createdAt: Date;
-  seller: Member;
-};
-
-type OrderWithBoth = {
-  id: string;
-  item: StashItem;
-  quantity: number;
-  price: number;
   status: OrderStatus;
   notes: string | null;
   createdAt: Date;
   buyer: Member;
-  seller: Member;
 };
 
 type Props = {
   actorId: string;
   isManager: boolean;
-  myOrders: OrderWithSeller[];
-  allOrders: OrderWithBoth[];
-  sellers: Seller[];
+  myOrders: Order[];
+  allOrders: Order[];
 };
 
 const STATUS_LABEL: Record<OrderStatus, string> = {
@@ -95,26 +79,21 @@ function itemEmoji(item: StashItem) {
   return STASH_ITEMS.find((s) => s.item === item)?.emoji ?? "📦";
 }
 
-function PlaceOrderForm({ sellers, actorId, onDone }: { sellers: Seller[]; actorId: string; onDone: () => void }) {
+function PlaceOrderForm({ onDone }: { onDone: () => void }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [sellerId, setSellerId] = useState("");
   const [item, setItem] = useState<StashItem | "">("");
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
 
-  const seller = sellers.find((s) => s.id === sellerId);
-  const availableItems = seller?.stashListings.filter((l) => l.quantity > 0) ?? [];
-  const listing = availableItems.find((l) => l.item === item);
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!sellerId || !item || quantity < 1) { setError("Completează toate câmpurile"); return; }
+    if (!item || quantity < 1) { setError("Completează toate câmpurile"); return; }
     setError("");
     startTransition(async () => {
       try {
-        await createOrder({ sellerId, item: item as StashItem, quantity, notes: notes || undefined });
+        await createOrder({ item: item as StashItem, quantity, notes: notes || undefined });
         router.refresh();
         onDone();
       } catch (err) {
@@ -126,79 +105,50 @@ function PlaceOrderForm({ sellers, actorId, onDone }: { sellers: Seller[]; actor
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="label">Vânzător</label>
+        <label className="label">Produs</label>
         <select
           className="input w-full"
-          value={sellerId}
-          onChange={(e) => { setSellerId(e.target.value); setItem(""); }}
+          value={item}
+          onChange={(e) => setItem(e.target.value as StashItem)}
           required
         >
-          <option value="">— alege vânzătorul —</option>
-          {sellers.filter((s) => s.id !== actorId).map((s) => (
-            <option key={s.id} value={s.id}>{s.name} ({s.rankName})</option>
+          <option value="">— alege produsul —</option>
+          {STASH_ITEMS.map((s) => (
+            <option key={s.item} value={s.item}>
+              {s.emoji} {s.label}
+            </option>
           ))}
         </select>
       </div>
 
-      {seller && (
-        <div>
-          <label className="label">Produs</label>
-          <select
-            className="input w-full"
-            value={item}
-            onChange={(e) => setItem(e.target.value as StashItem)}
-            required
-          >
-            <option value="">— alege produsul —</option>
-            {availableItems.map((l) => (
-              <option key={l.item} value={l.item}>
-                {itemEmoji(l.item)} {itemLabel(l.item)} — stoc: {l.quantity} {l.price > 0 ? `· $${l.price.toLocaleString()}` : ""}
-              </option>
-            ))}
-          </select>
-          {availableItems.length === 0 && (
-            <p className="text-xs text-muted mt-1">Vânzătorul nu are stoc disponibil.</p>
-          )}
-        </div>
-      )}
+      <div>
+        <label className="label">Cantitate</label>
+        <input
+          type="number"
+          className="input w-full"
+          min={1}
+          value={quantity}
+          onChange={(e) => setQuantity(Number(e.target.value))}
+          required
+        />
+      </div>
 
-      {item && (
-        <>
-          <div>
-            <label className="label">Cantitate</label>
-            <input
-              type="number"
-              className="input w-full"
-              min={1}
-              max={listing ? listing.quantity : 999}
-              value={quantity}
-              onChange={(e) => setQuantity(Number(e.target.value))}
-              required
-            />
-            {listing && listing.price > 0 && (
-              <p className="text-xs text-muted mt-1">
-                Total estimat: ${(listing.price * quantity).toLocaleString()}
-              </p>
-            )}
-          </div>
-          <div>
-            <label className="label">Note (opțional)</label>
-            <textarea
-              className="input w-full resize-none"
-              rows={2}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Detalii suplimentare..."
-            />
-          </div>
-        </>
-      )}
+      <div>
+        <label className="label">Note (opțional)</label>
+        <textarea
+          className="input w-full resize-none"
+          rows={2}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Detalii suplimentare..."
+        />
+      </div>
 
       {error && <p className="text-sm text-red-400">{error}</p>}
 
       <div className="flex gap-3 justify-end pt-1">
         <button type="button" className="btn-ghost" onClick={onDone}>Anulează</button>
-        <button type="submit" className="btn-primary" disabled={pending || !sellerId || !item}>
+        <button type="submit" className="btn-primary" disabled={pending || !item}>
           {pending ? "Se trimite…" : "Plasează comanda"}
         </button>
       </div>
@@ -206,7 +156,7 @@ function PlaceOrderForm({ sellers, actorId, onDone }: { sellers: Seller[]; actor
   );
 }
 
-function OrderRow({ order, isManager }: { order: OrderWithBoth | OrderWithSeller; isManager: boolean }) {
+function OrderRow({ order, isManager }: { order: Order; isManager: boolean }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const next = NEXT_STATUS[order.status];
@@ -220,9 +170,6 @@ function OrderRow({ order, isManager }: { order: OrderWithBoth | OrderWithSeller
     });
   }
 
-  const withBoth = order as OrderWithBoth;
-  const withSeller = order as OrderWithSeller;
-
   return (
     <tr>
       <td className="td">
@@ -231,41 +178,40 @@ function OrderRow({ order, isManager }: { order: OrderWithBoth | OrderWithSeller
       <td className="td text-center font-mono">{order.quantity}</td>
       {isManager && (
         <td className="td">
-          <span className="text-sm">{withBoth.buyer?.name}</span>
+          <span className="text-sm">{order.buyer.name}</span>
+          <span className="text-xs text-muted ml-1">({order.buyer.rankName})</span>
         </td>
       )}
-      <td className="td">
-        <span className="text-sm">{withSeller.seller?.name ?? withBoth.seller?.name}</span>
-      </td>
       <td className="td">
         <StatusBadge status={order.status} />
       </td>
       <td className="td text-muted text-xs">
         {new Date(order.createdAt).toLocaleDateString("ro-RO")}
       </td>
-      {isManager && next && (
+      {isManager && (
         <td className="td">
-          <button
-            onClick={advance}
-            disabled={pending}
-            className={`text-xs px-2 py-1 rounded border transition-colors ${
-              next === "FINALIZATA"
-                ? "border-emerald/50 text-emerald hover:bg-emerald/10"
-                : next === "ARHIVATA"
-                ? "border-muted/40 text-muted hover:bg-muted/10"
-                : "border-violet-400/50 text-violet-400 hover:bg-violet-400/10"
-            } disabled:opacity-50`}
-          >
-            {pending ? "…" : nextLabel}
-          </button>
+          {next && (
+            <button
+              onClick={advance}
+              disabled={pending}
+              className={`text-xs px-2 py-1 rounded border transition-colors ${
+                next === "FINALIZATA"
+                  ? "border-emerald/50 text-emerald hover:bg-emerald/10"
+                  : next === "ARHIVATA"
+                  ? "border-muted/40 text-muted hover:bg-muted/10"
+                  : "border-violet-400/50 text-violet-400 hover:bg-violet-400/10"
+              } disabled:opacity-50`}
+            >
+              {pending ? "…" : nextLabel}
+            </button>
+          )}
         </td>
       )}
-      {isManager && !next && <td className="td" />}
     </tr>
   );
 }
 
-export function ComenziPage({ actorId, isManager, myOrders, allOrders, sellers }: Props) {
+export function ComenziPage({ actorId, isManager, myOrders, allOrders }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [tab, setTab] = useState<"my" | "all">(isManager ? "all" : "my");
 
@@ -280,7 +226,7 @@ export function ComenziPage({ actorId, isManager, myOrders, allOrders, sellers }
             Comenzi
           </h1>
           <p className="mt-1 text-sm text-muted">
-            Plasează comenzi pentru produse din Stash. La finalizare, stash-ul tău se actualizează automat.
+            Cere iteme care vor fi craftate. La finalizare, stash-ul tău se actualizează automat.
           </p>
         </div>
         {!showForm && (
@@ -296,7 +242,7 @@ export function ComenziPage({ actorId, isManager, myOrders, allOrders, sellers }
           <h2 className="font-gta text-gold text-sm tracking-widest uppercase mb-4">
             Plasează o comandă
           </h2>
-          <PlaceOrderForm sellers={sellers} actorId={actorId} onDone={() => setShowForm(false)} />
+          <PlaceOrderForm onDone={() => setShowForm(false)} />
         </div>
       )}
 
@@ -331,8 +277,7 @@ export function ComenziPage({ actorId, isManager, myOrders, allOrders, sellers }
                 <tr>
                   <th className="th">Produs</th>
                   <th className="th text-center">Cant.</th>
-                  {isManager && <th className="th">Cumpărător</th>}
-                  <th className="th">Vânzător</th>
+                  {isManager && <th className="th">Comandat de</th>}
                   <th className="th">Status</th>
                   <th className="th">Data</th>
                   {isManager && <th className="th">Acțiune</th>}
