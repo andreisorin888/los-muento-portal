@@ -103,6 +103,8 @@ model Member {
   wikiPages              WikiPage[]           @relation("WikiAuthor")
   wikiEdits              WikiVersion[]        @relation("WikiEditor")
   stashListings          StashListing[]
+  ordersBuyer            Order[]              @relation("OrderBuyer")
+  ordersSeller           Order[]              @relation("OrderSeller")
 
   // Phase 4
   chestTransactions      ChestTransaction[]   @relation("ChestTxMember")
@@ -866,4 +868,29 @@ enum StashItem {
   VESTA
   TRUSA_MEDICALA
   PASTILE
+}
+
+// ── Comenzi (Orders) ──────────────────────────────────────────────────────────
+
+model Order {
+  id        String      @id @default(cuid())
+  buyerId   String
+  sellerId  String
+  item      StashItem
+  quantity  Int
+  price     Int         @default(0)
+  status    OrderStatus @default(DEPUSA)
+  notes     String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  buyer  Member @relation("OrderBuyer", fields: [buyerId], references: [id])
+  seller Member @relation("OrderSeller", fields: [sellerId], references: [id])
+}
+
+enum OrderStatus {
+  DEPUSA
+  IN_PROGRES
+  FINALIZATA
+  ARHIVATA
 }
