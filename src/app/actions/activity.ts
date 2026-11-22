@@ -18,8 +18,10 @@ export async function submitActivity(data: {
     const memberId = session.user.memberId;
 
     if (!data.title.trim()) return { error: "Titlul este obligatoriu." };
-    if (data.proofUrl && !/^https?:\/\/.+/.test(data.proofUrl)) {
-      return { error: "Link-ul dovezii nu este valid." };
+    if (data.proofUrl) {
+      const isUrl = /^https?:\/\/.+/.test(data.proofUrl);
+      const isImage = /^data:image\/(jpeg|jpg|png|gif|webp|bmp|svg\+xml);base64,/.test(data.proofUrl);
+      if (!isUrl && !isImage) return { error: "Dovada trebuie să fie un link valid sau o poză." };
     }
 
     const category = await db.activityCategory.findUnique({ where: { slug: data.type } });

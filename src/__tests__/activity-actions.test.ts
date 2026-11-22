@@ -53,7 +53,7 @@ describe("submitActivity", () => {
       type: "MISIUNE",
       proofUrl: "not-a-url",
     });
-    expect(result.error).toBe("Link-ul dovezii nu este valid.");
+    expect(result.error).toBe("Dovada trebuie să fie un link valid sau o poză.");
   });
 
   it("returns error when activity type does not exist", async () => {

@@ -80,14 +80,24 @@ export default async function ActivitatiPage() {
                     </td>
                     <td className="td">
                       {a.proofUrl ? (
-                        <a
-                          href={a.proofUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-pink-soft underline hover:no-underline"
-                        >
-                          Vezi dovada
-                        </a>
+                        a.proofUrl.startsWith("data:image/") ? (
+                          <a href={a.proofUrl} target="_blank" rel="noopener noreferrer" title="Deschide poza">
+                            <img
+                              src={a.proofUrl}
+                              alt="Dovadă"
+                              className="h-8 w-12 rounded object-cover border border-panel hover:opacity-80 transition-opacity"
+                            />
+                          </a>
+                        ) : (
+                          <a
+                            href={a.proofUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-pink-soft underline hover:no-underline"
+                          >
+                            Vezi dovada
+                          </a>
+                        )
                       ) : (
                         <span className="text-xs text-muted">—</span>
                       )}
