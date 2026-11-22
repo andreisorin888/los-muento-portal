@@ -16,6 +16,7 @@ import { DeptManager } from "./DeptManager";
 import { CrewManager } from "./CrewManager";
 import { ActivityCategoryManager } from "./ActivityCategoryManager";
 import { ChestItemTypeManager } from "./ChestItemTypeManager";
+import { ProofCleanupManager } from "./ProofCleanupManager";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Configurare" };
@@ -98,6 +99,11 @@ export default async function ConfigurationPage() {
 
       {/* Crews */}
       <CrewManager crews={crews} freeCapos={freeCapos} depts={depts} />
+
+      {/* Proof image cleanup */}
+      <Card title="Curățare poze dovezi">
+        <ProofCleanupManager />
+      </Card>
     </div>
   );
 }

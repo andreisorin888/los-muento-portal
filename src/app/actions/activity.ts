@@ -53,6 +53,35 @@ export async function submitActivity(data: {
   }
 }
 
+export async function cleanupProofImages(olderThanDays = 30): Promise<{ count?: number; error?: string }> {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.memberId) return { error: "Neautentificat." };
+
+    const actor = await db.member.findUnique({
+      where: { id: session.user.memberId },
+      select: { rankLevel: true },
+    });
+    if (!actor || actor.rankLevel < 100) return { error: "Doar Boss-ul poate curăța pozele." };
+
+    const cutoff = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000);
+
+    const { count } = await db.activity.updateMany({
+      where: {
+        proofUrl: { startsWith: "data:image/" },
+        createdAt: { lt: cutoff },
+      },
+      data: { proofUrl: null },
+    });
+
+    revalidatePath("/activitati");
+    revalidatePath("/activity");
+    return { count };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Eroare necunoscută." };
+  }
+}
+
 export async function getMyActivities() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.memberId) return [];
