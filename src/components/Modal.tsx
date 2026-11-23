@@ -15,7 +15,7 @@ export function Modal({ open, onClose, title, children }: { open: boolean; onClo
   }, [open]);
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-[90] grid place-items-end sm:place-items-center">
+    <div className="fixed inset-0 z-[9999] grid place-items-end sm:place-items-center">
       <button aria-label="Close dialog" className="absolute inset-0 bg-ink/80 backdrop-blur-sm" onClick={onClose} />
       <div ref={ref} role="dialog" aria-modal="true" aria-label={title} className="relative max-h-[92vh] w-full overflow-y-auto rounded-t-2xl border border-line bg-charcoal p-6 shadow-2xl sm:max-w-lg sm:rounded-2xl">
         <div className="mb-5 flex items-center justify-between">
