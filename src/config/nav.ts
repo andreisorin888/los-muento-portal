@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Users, Activity, ClipboardList, Package, Wallet, Map, Siren, Crosshair,
   UserPlus, CalendarDays, Trophy, BarChart3, Megaphone, ShieldCheck, Settings, ScrollText,
-  Vote, GraduationCap, Library, FlaskConical, ShoppingCart,
+  Vote, GraduationCap, Library, FlaskConical, ShoppingCart, ListChecks,
   type LucideIcon,
 } from "lucide-react";
 import * as demo from "@/lib/demo-data";
@@ -90,6 +90,7 @@ export const MODULES: ModuleDef[] = [
   // Phase 7
   { slug: "ghid-ilegal", label: "Ghid Ilegal", icon: FlaskConical, minLevel: 20, illegalOnly: true, group: "Operațiuni", phase: 7, summary: "Calculatoare zone, producție, spălare bani și ghid complet pentru activitățile ilegale.", scope: ["Zone Livrare cu bonus orar (Groove, El Burro, Vespucii)", "Calculatoare Producție: Alcool, Metafetamină, Componente", "Spălare bani și Black Market", "Cerințe ore joburi, kit mafie, crafting armament, hărți"] },
   { slug: "comenzi", label: "Comenzi", icon: ShoppingCart, minLevel: 20, illegalOnly: true, group: "Operațiuni", phase: 7, summary: "Plasează comenzi pentru produse din Stash. Managerii procesează și finalizează comenzile.", scope: ["Comandă TEC, Gloanțe, Vestă, Trusă, Pastile", "Status: Depusă → În progres → Finalizată", "La finalizare stash-ul tău se actualizează automat", "Capo+ gestionează și arhivează comenzile"] },
+  { slug: "crew-tasks", label: "Taskuri echipă", icon: ListChecks, minLevel: 20, group: "Familia", phase: 7, summary: "Taskuri setate per echipă de Capo+. Membrii confirmă predarea, Capo vede progresul în timp real.", scope: ["Capo+ setează ce trebuie să aducă echipa", "Membrii confirmă predarea individual", "Dashboard cu progres per echipă și per membru", "Arhivă taskuri finalizate"] },
 
   // Phase 6
   { slug: "polls", label: "Sondaje", icon: Vote, minLevel: 20, group: "Familia", phase: 6, summary: "Votează pe decizii ale organizației.", scope: ["Opțiuni multiple, deadline de vot", "Rezultate vizibile după vot", "Capo+ creează sondaje", "Sondaje targetate pe grade"] },

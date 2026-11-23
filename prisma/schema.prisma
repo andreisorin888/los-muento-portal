@@ -68,6 +68,7 @@ model Member {
   status        MemberStatus @default(ACTIV)
   role          MemberRole   @default(LEGAL)
   points        Int          @default(0)
+  gameMonths    Int          @default(0)
   joinedAt      DateTime     @default(now())
   archivedAt    DateTime?
   archivedNote  String?
@@ -94,6 +95,10 @@ model Member {
   monthlyWins            MonthlyWinner[]      @relation("MonthlyWinner")
   confirmedWins          MonthlyWinner[]      @relation("WinnerConfirmer")
   managementNotes        ManagementNote[]     @relation("NoteAuthor")
+
+  // Phase 7
+  crewTasksCreated       CrewTask[]           @relation("CrewTaskCreator")
+  crewTaskSubmissions    CrewTaskSubmission[] @relation("CrewTaskSubmitter")
 
   // Phase 6
   pollsCreated           Poll[]               @relation("PollCreator")
@@ -185,9 +190,10 @@ model Crew {
   capoId String      @unique
   deptId String?
 
-  capo    Member      @relation("CrewCapo", fields: [capoId], references: [id])
-  dept    Department? @relation(fields: [deptId], references: [id])
-  members Member[]    @relation("CrewMembers")
+  capo      Member      @relation("CrewCapo", fields: [capoId], references: [id])
+  dept      Department? @relation(fields: [deptId], references: [id])
+  members   Member[]    @relation("CrewMembers")
+  crewTasks CrewTask[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -889,4 +895,37 @@ enum OrderStatus {
   IN_PROGRES
   FINALIZATA
   ARHIVATA
+}
+
+// ── Taskuri per echipă ────────────────────────────────────────────────────────
+
+model CrewTask {
+  id          String     @id @default(cuid())
+  crewId      String
+  title       String
+  description String?
+  dueDate     DateTime?
+  status      TaskStatus @default(ACTIV)
+  createdById String
+
+  crew        Crew                 @relation(fields: [crewId], references: [id])
+  createdBy   Member               @relation("CrewTaskCreator", fields: [createdById], references: [id])
+  submissions CrewTaskSubmission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CrewTaskSubmission {
+  id       String  @id @default(cuid())
+  taskId   String
+  memberId String
+  note     String?
+  proofUrl String?
+
+  task   CrewTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  member Member   @relation("CrewTaskSubmitter", fields: [memberId], references: [id])
+
+  @@unique([taskId, memberId])
+  createdAt DateTime @default(now())
 }

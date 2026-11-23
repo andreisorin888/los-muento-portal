@@ -104,6 +104,7 @@ export function MemberDirectoryDB({
               <th className="th">Departament</th>
               <th className="th">Echipă</th>
               <th className="th">Stare</th>
+              <th className="th">Luni joc</th>
               <th className="th">Task săpt.</th>
               <th className="th">Înscris la</th>
             </tr>
@@ -124,6 +125,15 @@ export function MemberDirectoryDB({
                   <td className="td">{m.dept?.name ?? "—"}</td>
                   <td className="td">{m.crew?.name ?? "—"}</td>
                   <td className="td"><Badge>{STATUS_LABELS[m.status]}</Badge></td>
+                  <td className="td">
+                    <span className="font-display font-bold text-sm">
+                      {m.gameMonths > 0 ? (
+                        <span className="text-violet">{m.gameMonths}<span className="text-xs font-normal text-muted ml-0.5">luni</span></span>
+                      ) : (
+                        <span className="text-muted text-xs">—</span>
+                      )}
+                    </span>
+                  </td>
                   <td className="td">
                     {canManageTasks && latestTaskId ? (
                       <button
@@ -177,7 +187,7 @@ export function MemberDirectoryDB({
             })}
             {!rows.length && (
               <tr>
-                <td colSpan={8} className="td py-10 text-center text-muted">
+                <td colSpan={9} className="td py-10 text-center text-muted">
                   Niciun membru nu corespunde. Șterge căutarea sau alege alt grad.
                 </td>
               </tr>

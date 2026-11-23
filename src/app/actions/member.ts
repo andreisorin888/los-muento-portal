@@ -278,6 +278,29 @@ export async function editMemberDetails(
   }
 }
 
+export async function updateGameMonths(
+  months: number,
+): Promise<{ error?: string }> {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.memberId) return { error: "Neautentificat." };
+    const memberId = session.user.memberId;
+
+    const value = Math.max(0, Math.min(999, Math.round(months)));
+
+    await db.member.update({
+      where: { id: memberId },
+      data: { gameMonths: value },
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/members");
+    return {};
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Eroare necunoscută." };
+  }
+}
+
 export async function updateProfile(
   memberId: string,
   data: { name?: string; discordName?: string },

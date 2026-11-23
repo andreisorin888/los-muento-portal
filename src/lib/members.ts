@@ -29,6 +29,7 @@ export type MemberRow = {
   status: MemberStatus;
   role: MemberRole;
   points: number;
+  gameMonths: number;
   dept: { id: string; name: string } | null;
   crew: { id: string; name: string } | null;
   joinedAt: Date;
@@ -67,6 +68,7 @@ export async function getMemberList(opts: {
         status: true,
         role: true,
         points: true,
+        gameMonths: true,
         dept: { select: { id: true, name: true } },
         crew: { select: { id: true, name: true } },
         joinedAt: true,

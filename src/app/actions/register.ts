@@ -9,6 +9,7 @@ import { generateNextMemberCode } from "@/lib/members";
 export async function registerMember(data: {
   name: string;
   recruiterId: string;
+  gameMonths?: number;
 }): Promise<{ error?: string }> {
   try {
     const session = await getServerSession(authOptions);
@@ -55,6 +56,7 @@ export async function registerMember(data: {
           rankLevel: 10,
           status: "PROBATORIE",
           recruitedById: data.recruiterId,
+          gameMonths: Math.max(0, Math.min(999, data.gameMonths ?? 0)),
         },
       });
 

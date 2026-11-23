@@ -4,6 +4,7 @@ import { Activity as ActivityIcon, Clock, Crown, Flame, Shield, Users } from "lu
 import { Badge, Card, StatCard } from "@/components/ui";
 import { ChestChart, HoursChart } from "@/components/charts";
 import { Welcome } from "@/components/Welcome";
+import { GameMonthsWidget } from "./GameMonthsWidget";
 import { getAssetUrl } from "@/config/assets";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -92,7 +93,7 @@ export default async function DashboardPage() {
     session?.user?.memberId
       ? db.member.findUnique({
           where: { id: session.user.memberId },
-          select: { name: true, rankName: true, dept: { select: { name: true } } },
+          select: { name: true, rankName: true, gameMonths: true, dept: { select: { name: true } } },
         })
       : Promise.resolve(null),
     db.member.count({ where: { status: { not: "ARHIVAT" } } }),
@@ -161,6 +162,7 @@ export default async function DashboardPage() {
   const name = currentMember?.name ?? session?.user?.name ?? "Membru";
   const rank = currentMember?.rankName ?? session?.user?.rankName ?? "";
   const dept = currentMember?.dept?.name ?? "";
+  const gameMonths = currentMember?.gameMonths ?? 0;
 
   const link = (href: string, label: string) => (
     <Link href={href} className="text-xs font-semibold text-pink-soft hover:underline">{label}</Link>
@@ -195,6 +197,13 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-5">
       <Welcome banner={getAssetUrl("dashboardHero")} name={name} rank={rank} dept={dept} />
+
+      {session?.user?.memberId && (
+        <Card title="Experiența mea în joc">
+          <GameMonthsWidget current={gameMonths} />
+          <p className="mt-2 text-xs text-muted">Numărul de luni în joc este echivalentul orelor tale de experiență și este vizibil celorlalți membri.</p>
+        </Card>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Total membri" value={totalMembers} note={`${activeMembers} activi`} icon={Users} accent="pink" />

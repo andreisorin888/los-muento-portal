@@ -13,6 +13,7 @@ export default function RegisterForm({ members }: { members: Member[] }) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [recruiterId, setRecruiterId] = useState("");
+  const [gameMonths, setGameMonths] = useState(0);
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
 
@@ -20,7 +21,7 @@ export default function RegisterForm({ members }: { members: Member[] }) {
     e.preventDefault();
     setError("");
     startTransition(async () => {
-      const result = await registerMember({ name, recruiterId });
+      const result = await registerMember({ name, recruiterId, gameMonths });
       if (result.error) {
         setError(result.error);
         return;
@@ -48,6 +49,18 @@ export default function RegisterForm({ members }: { members: Member[] }) {
             minLength={2}
             maxLength={60}
           />
+        </Field>
+        <Field label="Câte luni ești în joc? (echivalent ore de experiență)">
+          <input
+            className="input"
+            type="number"
+            min={0}
+            max={999}
+            value={gameMonths}
+            onChange={(e) => setGameMonths(Math.max(0, Math.min(999, Number(e.target.value))))}
+            placeholder="ex. 6"
+          />
+          <p className="mt-1 text-xs text-muted">0 dacă ești nou. Poți actualiza oricând din panoul principal.</p>
         </Field>
         <Field label="Cine te-a recrutat?">
           {members.length === 0 ? (
