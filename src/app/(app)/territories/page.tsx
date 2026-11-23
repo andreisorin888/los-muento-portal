@@ -50,12 +50,6 @@ export default async function TerritoriesPage() {
       : Promise.resolve([]),
   ]);
 
-  const counts = {
-    controlat: territories.filter((t) => t.status === "CONTROLAT").length,
-    contestat: territories.filter((t) => t.status === "CONTESTAT").length,
-    neutru: territories.filter((t) => t.status === "NEUTRU").length,
-  };
-
   // Group by zone — Oraș first, Cayo second, then anything else, then ungrouped
   const ZONE_ORDER = ["Oraș", "Cayo"];
   const groups = new Map<string, typeof territories>();
@@ -88,16 +82,7 @@ export default async function TerritoriesPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        {([["Controlate", counts.controlat], ["Contestate", counts.contestat], ["Neutre", counts.neutru]] as const).map(([k, v]) => (
-          <div key={k} className="panel p-5">
-            <p className="font-display text-4xl font-extrabold">{v}</p>
-            <p className="mt-1 text-sm text-muted">{k}</p>
-          </div>
-        ))}
-      </div>
-
-      {territories.length === 0 ? (
+{territories.length === 0 ? (
         <Card title="Teritorii">
           <p className="text-sm text-muted">Nu există teritorii definite. Adaugă primul cu butonul de mai sus.</p>
         </Card>
