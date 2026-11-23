@@ -14,8 +14,8 @@ const STATUS_TONE: Record<TerritoryStatus, "emerald" | "gold" | "rose" | undefin
   CONTROLAT: "emerald",
   CONTESTAT: "gold",
   NEUTRU: undefined,
-  CU_ARME: "rose",
-  FARA_ARME: undefined,
+  CU_ARME: "emerald",
+  FARA_ARME: "rose",
 };
 const STATUS_LABEL: Record<TerritoryStatus, string> = {
   CONTROLAT: "Controlat",

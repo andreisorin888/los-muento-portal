@@ -6,7 +6,8 @@ export function toneFor(value: string): Tone {
   const v = value.toLowerCase();
   if (/(aprobat|activ|finalizat|controlat|succes|online|acceptat ca)/.test(v)) return "emerald";
   if (/(așteptare|așteapt|probat|probă|corecți)/.test(v)) return "gold";
-  if (/(respins|eșuat|întârziat|suspend|critic|cu arme)/.test(v)) return "rose";
+  if (/(respins|eșuat|întârziat|suspend|critic|fara arme|fără arme)/.test(v)) return "rose";
+  if (/(cu arme)/.test(v)) return "emerald";
   if (/(contestat|ridicat)/.test(v)) return "orange";
   if (/(în curs|acceptat|medie|operațiune)/.test(v)) return "violet";
   return "neutral";

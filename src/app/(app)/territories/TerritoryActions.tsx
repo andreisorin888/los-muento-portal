@@ -9,9 +9,6 @@ import type { TerritoryStatus } from "@prisma/client";
 type MemberOpt = { id: string; name: string };
 
 const STATUS_OPTS: { value: TerritoryStatus; label: string }[] = [
-  { value: "CONTROLAT", label: "Controlat" },
-  { value: "CONTESTAT", label: "Contestat" },
-  { value: "NEUTRU", label: "Neutru" },
   { value: "CU_ARME", label: "Cu arme" },
   { value: "FARA_ARME", label: "Fără arme" },
 ];
