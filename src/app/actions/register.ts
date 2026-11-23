@@ -56,7 +56,7 @@ export async function registerMember(data: {
           rankLevel: 10,
           status: "PROBATORIE",
           recruitedById: data.recruiterId,
-          gameMonths: Math.max(0, Math.min(999, data.gameMonths ?? 0)),
+          gameMonths: Math.max(0, Math.min(9999, data.gameMonths ?? 0)),
         },
       });
 

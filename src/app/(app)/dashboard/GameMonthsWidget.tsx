@@ -34,9 +34,9 @@ export function GameMonthsWidget({ current }: { current: number }) {
         <input
           type="number"
           min={0}
-          max={999}
+          max={9999}
           value={value}
-          onChange={(e) => { setValue(Math.max(0, Math.min(999, Number(e.target.value)))); setSaved(false); }}
+          onChange={(e) => { setValue(Math.max(0, Math.min(9999, Number(e.target.value)))); setSaved(false); }}
           className="input w-20 text-center"
           disabled={pending}
         />

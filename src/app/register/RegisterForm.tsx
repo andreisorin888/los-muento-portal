@@ -55,9 +55,9 @@ export default function RegisterForm({ members }: { members: Member[] }) {
             className="input"
             type="number"
             min={0}
-            max={999}
+            max={9999}
             value={gameMonths}
-            onChange={(e) => setGameMonths(Math.max(0, Math.min(999, Number(e.target.value))))}
+            onChange={(e) => setGameMonths(Math.max(0, Math.min(9999, Number(e.target.value))))}
             placeholder="ex. 6"
           />
           <p className="mt-1 text-xs text-muted">0 dacă ești nou. Poți actualiza oricând din panoul principal.</p>
