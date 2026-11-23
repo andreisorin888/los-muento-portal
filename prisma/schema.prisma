@@ -522,7 +522,9 @@ model Territory {
   id             String          @id @default(cuid())
   name           String          @unique
   description    String?
+  zone           String?
   status         TerritoryStatus @default(NEUTRU)
+  controllerName String?
   controlledById String?
 
   controlledBy Member?            @relation("TerritoryController", fields: [controlledById], references: [id])
