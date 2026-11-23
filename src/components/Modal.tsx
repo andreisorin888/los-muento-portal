@@ -1,20 +1,30 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 export function Modal({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
   useEffect(() => { onCloseRef.current = onClose; });
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onCloseRef.current();
     document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
     ref.current?.querySelector<HTMLElement>("input,select,textarea")?.focus();
-    return () => document.removeEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
   }, [open]);
-  if (!open) return null;
-  return (
+
+  if (!open || !mounted) return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-[9999] grid place-items-end sm:place-items-center">
       <button aria-label="Close dialog" className="absolute inset-0 bg-ink/80 backdrop-blur-sm" onClick={onClose} />
       <div ref={ref} role="dialog" aria-modal="true" aria-label={title} className="relative max-h-[92vh] w-full overflow-y-auto rounded-t-2xl border border-line bg-charcoal p-6 shadow-2xl sm:max-w-lg sm:rounded-2xl">
@@ -24,6 +34,7 @@ export function Modal({ open, onClose, title, children }: { open: boolean; onClo
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
