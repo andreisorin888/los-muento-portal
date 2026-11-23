@@ -552,6 +552,8 @@ enum TerritoryStatus {
   CONTROLAT
   CONTESTAT
   NEUTRU
+  CU_ARME
+  FARA_ARME
 }
 
 // ── Armurărie ─────────────────────────────────────────────────────────────────

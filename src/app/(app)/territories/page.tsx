@@ -10,15 +10,19 @@ import { TerritoryStatusBtn, AddTerritoryBtn, BulkImportBtn } from "./TerritoryA
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Teritorii" };
 
-const STATUS_TONE: Record<TerritoryStatus, "emerald" | "gold" | undefined> = {
+const STATUS_TONE: Record<TerritoryStatus, "emerald" | "gold" | "rose" | undefined> = {
   CONTROLAT: "emerald",
   CONTESTAT: "gold",
   NEUTRU: undefined,
+  CU_ARME: "rose",
+  FARA_ARME: undefined,
 };
 const STATUS_LABEL: Record<TerritoryStatus, string> = {
   CONTROLAT: "Controlat",
   CONTESTAT: "Contestat",
   NEUTRU: "Neutru",
+  CU_ARME: "Cu arme",
+  FARA_ARME: "Fără arme",
 };
 
 export default async function TerritoriesPage() {
