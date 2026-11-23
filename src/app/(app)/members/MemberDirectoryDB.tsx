@@ -104,7 +104,7 @@ export function MemberDirectoryDB({
               <th className="th">Departament</th>
               <th className="th">Echipă</th>
               <th className="th">Stare</th>
-              <th className="th">Luni joc</th>
+              <th className="th">Luni oraș</th>
               <th className="th">Task săpt.</th>
               <th className="th">Înscris la</th>
             </tr>

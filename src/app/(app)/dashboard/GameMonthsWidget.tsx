@@ -27,7 +27,7 @@ export function GameMonthsWidget({ current }: { current: number }) {
     <div className="flex flex-wrap items-center gap-3">
       <div className="flex items-center gap-2 text-muted">
         <Clock className="h-4 w-4 shrink-0" />
-        <span className="text-sm">Luni în joc:</span>
+        <span className="text-sm">Luni în oraș:</span>
         <span className="font-display font-bold text-violet text-lg">{current}</span>
       </div>
       <div className="flex items-center gap-2">

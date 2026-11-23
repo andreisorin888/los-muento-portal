@@ -199,9 +199,9 @@ export default async function DashboardPage() {
       <Welcome banner={getAssetUrl("dashboardHero")} name={name} rank={rank} dept={dept} />
 
       {session?.user?.memberId && (
-        <Card title="Experiența mea în joc">
+        <Card title="Experiența mea în oraș">
           <GameMonthsWidget current={gameMonths} />
-          <p className="mt-2 text-xs text-muted">Numărul de luni în joc este echivalentul orelor tale de experiență și este vizibil celorlalți membri.</p>
+          <p className="mt-2 text-xs text-muted">Numărul de luni în oraș este echivalentul orelor tale de experiență și este vizibil celorlalți membri.</p>
         </Card>
       )}
 

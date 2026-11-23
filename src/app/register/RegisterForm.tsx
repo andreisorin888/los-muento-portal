@@ -50,7 +50,7 @@ export default function RegisterForm({ members }: { members: Member[] }) {
             maxLength={60}
           />
         </Field>
-        <Field label="Câte luni ești în joc? (echivalent ore de experiență)">
+        <Field label="Câte luni ești în oraș? (echivalent ore de experiență)">
           <input
             className="input"
             type="number"
