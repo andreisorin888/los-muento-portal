@@ -14,7 +14,7 @@ async function getActor() {
   if (!session?.user?.memberId) throw new Error("Neautentificat.");
   const m = await db.member.findUnique({
     where: { id: session.user.memberId },
-    select: { id: true, rankLevel: true, status: true, memberRole: true, crewId: true },
+    select: { id: true, rankLevel: true, status: true, role: true, crewId: true },
   });
   if (!m) throw new Error("Profil de membru negăsit.");
   return m;
@@ -28,11 +28,11 @@ export type WeeklyTarget = {
 };
 
 function memberMatchesTarget(
-  member: { rankLevel: number; memberRole: string; crewId: string | null },
+  member: { rankLevel: number; role: string; crewId: string | null },
   target: WeeklyTarget,
 ): boolean {
   if (member.rankLevel < target.rankMin || member.rankLevel > target.rankMax) return false;
-  if (target.roles.length > 0 && !target.roles.includes(member.memberRole)) return false;
+  if (target.roles.length > 0 && !target.roles.includes(member.role)) return false;
   if (target.crewIds.length > 0 && (!member.crewId || !target.crewIds.includes(member.crewId))) return false;
   return true;
 }
@@ -78,7 +78,7 @@ export async function submitWeeklyTask(data: {
     if (!task || task.status !== "ACTIV") return { error: "Task inexistent sau închis." };
 
     const target = task.targetJson as WeeklyTarget;
-    if (!memberMatchesTarget({ rankLevel: actor.rankLevel, memberRole: actor.memberRole, crewId: actor.crewId }, target)) {
+    if (!memberMatchesTarget({ rankLevel: actor.rankLevel, role: actor.role, crewId: actor.crewId }, target)) {
       return { error: "Nu faci parte din grupul țintă al acestui task." };
     }
 

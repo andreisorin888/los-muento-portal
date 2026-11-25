@@ -7,6 +7,7 @@ import { canManageTasks } from "@/lib/permissions";
 import type { AssigneeType, MemberRole, MemberStatus, TaskPriority, TaskStatus } from "@prisma/client";
 import { TaskForm } from "./TaskForm";
 import { CompleteBtn } from "./CompleteBtn";
+import { ArchiveTaskBtn } from "./ArchiveTaskBtn";
 import { WeeklyTaskCreateForm, WeeklyTaskBossPanel } from "./WeeklyTaskBoss";
 import { WeeklyTaskMemberCard } from "./WeeklyTaskMember";
 import { Clock, AlertTriangle, CheckCircle2, XCircle, MinusCircle, CalendarDays } from "lucide-react";
@@ -42,7 +43,7 @@ export default async function TasksPage() {
 
   const [tasks, members, depts, completions, crews, activeWeeklyTask, myWeeklySubmission] = await Promise.all([
     db.task.findMany({
-      where: roleFilter,
+      where: { ...roleFilter, status: { not: "ANULAT" } },
       include: {
         createdBy: { select: { name: true } },
         completions: { select: { memberId: true, createdAt: true } },
@@ -88,7 +89,7 @@ export default async function TasksPage() {
   ];
 
   const activeTasks = tasks.filter((t) => t.status === "ACTIV");
-  const doneTasks = tasks.filter((t) => t.status !== "ACTIV");
+  const doneTasks = tasks.filter((t) => t.status === "FINALIZAT");
   const now = new Date();
 
   // Check if member is in weekly task target
@@ -206,11 +207,14 @@ export default async function TasksPage() {
                         <span>{task.completions.length} finalizări</span>
                       </div>
                     </div>
-                    {!myCompletion ? (
-                      <CompleteBtn taskId={task.id} />
-                    ) : (
-                      <span className="text-xs text-emerald-400">✓ Finalizat de tine</span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {!myCompletion ? (
+                        <CompleteBtn taskId={task.id} />
+                      ) : (
+                        <span className="text-xs text-emerald-400">✓ Finalizat de tine</span>
+                      )}
+                      {canCreate && <ArchiveTaskBtn taskId={task.id} />}
+                    </div>
                   </div>
                 </div>
               );
