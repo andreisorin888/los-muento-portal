@@ -53,15 +53,17 @@ const ROBBERY_STATUS: Record<string, string> = {
 };
 const TERRITORY_STATUS: Record<string, string> = {
   CONTROLAT: "Controlat", CONTESTAT: "Contestat", NEUTRU: "Neutru",
+  CU_ARME: "Cu arme", FARA_ARME: "Fără arme",
 };
 const TASK_STATUS: Record<string, string> = {
   ACTIV: "Activ", FINALIZAT: "Finalizat", ANULAT: "Anulat",
 };
 
-type TerritoryTone = "emerald" | "gold" | undefined;
+type TerritoryTone = "emerald" | "gold" | "rose" | undefined;
 function territoryTone(s: string): TerritoryTone {
-  if (s === "CONTROLAT") return "emerald";
+  if (s === "CONTROLAT" || s === "CU_ARME") return "emerald";
   if (s === "CONTESTAT") return "gold";
+  if (s === "FARA_ARME") return "rose";
   return undefined;
 }
 type RobberyTone = "emerald" | undefined;
@@ -84,6 +86,7 @@ export default async function DashboardPage() {
     chestFull,
     pendingChestCount,
     pendingRecruits,
+    pendingWeeklySubmissions,
     tasks,
     territories,
     robberies,
@@ -132,6 +135,7 @@ export default async function DashboardPage() {
     }),
     db.chestTransaction.count({ where: { approvalStatus: "ASTEPTARE" } }),
     db.recruit.count({ where: { status: "CANDIDAT" } }),
+    db.weeklyTaskSubmission.count({ where: { status: "PREDAT", task: { status: "ACTIV" } } }),
     db.task.findMany({
       where: { status: { not: "ANULAT" } },
       orderBy: { createdAt: "desc" },
@@ -188,7 +192,7 @@ export default async function DashboardPage() {
   }
   const chestSeries = days7.map((d) => ({ day: d, ...chestDayMap[d] }));
 
-  const totalPendingApprovals = pendingChestCount + pendingRecruits;
+  const totalPendingApprovals = pendingChestCount + pendingRecruits + pendingWeeklySubmissions;
   const weekPoints = weekActivities.reduce((s, a) => s + a.points, 0);
 
   const activeTasks = tasks.filter((t) => t.status === "ACTIV").length;
@@ -241,7 +245,7 @@ export default async function DashboardPage() {
       <div className="grid gap-5 lg:grid-cols-3">
         <Card
           title="Aprobare necesară"
-          action={<Badge tone={totalPendingApprovals > 0 ? "gold" : undefined}>{totalPendingApprovals > 0 ? `${totalPendingApprovals} în așteptare` : "Totul în regulă"}</Badge>}
+          action={<Badge tone={totalPendingApprovals > 0 ? "gold" : undefined}>{totalPendingApprovals > 0 ? `${totalPendingApprovals} în așteptare` : "Totul în ordine"}</Badge>}
         >
           {totalPendingApprovals === 0 ? (
             <p className="text-sm text-muted">Nicio aprobare în așteptare.</p>
@@ -257,6 +261,12 @@ export default async function DashboardPage() {
                 <li className="flex items-center justify-between gap-3 rounded-xl bg-white/[.03] p-3">
                   <div><p className="text-sm font-semibold">Recruți noi</p><p className="text-xs text-muted">Înregistrați automat</p></div>
                   <Link href="/recruitment"><Badge tone="gold">{String(pendingRecruits)}</Badge></Link>
+                </li>
+              )}
+              {pendingWeeklySubmissions > 0 && (
+                <li className="flex items-center justify-between gap-3 rounded-xl bg-white/[.03] p-3">
+                  <div><p className="text-sm font-semibold">Task săptămânal</p><p className="text-xs text-muted">Predări în așteptare</p></div>
+                  <Link href="/tasks"><Badge tone="gold">{String(pendingWeeklySubmissions)}</Badge></Link>
                 </li>
               )}
             </ul>
