@@ -107,6 +107,9 @@ model Member {
   trainingProgress       TrainingProgress[]   @relation("TrainingStudent")
   wikiPages              WikiPage[]           @relation("WikiAuthor")
   wikiEdits              WikiVersion[]        @relation("WikiEditor")
+  weeklyTasksCreated     WeeklyTask[]             @relation("WeeklyTaskCreator")
+  weeklyTaskSubmissions  WeeklyTaskSubmission[]   @relation("WeeklyTaskSubmitter")
+  weeklyTaskConfirmed    WeeklyTaskSubmission[]   @relation("WeeklyTaskConfirmer")
   stashListings          StashListing[]
   ordersBuyer            Order[]              @relation("OrderBuyer")
 
@@ -932,4 +935,51 @@ model CrewTaskSubmission {
 
   @@unique([taskId, memberId])
   createdAt DateTime @default(now())
+}
+
+// ── Task săptămânal ───────────────────────────────────────────────────────────
+
+model WeeklyTask {
+  id          String           @id @default(cuid())
+  title       String
+  description String?
+  targetJson  Json
+  status      WeeklyTaskStatus @default(ACTIV)
+  createdById String
+
+  createdBy   Member                 @relation("WeeklyTaskCreator", fields: [createdById], references: [id])
+  submissions WeeklyTaskSubmission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WeeklyTaskSubmission {
+  id            String                 @id @default(cuid())
+  taskId        String
+  memberId      String
+  note          String?
+  proofUrl      String?
+  status        WeeklySubmissionStatus @default(PREDAT)
+  confirmedById String?
+  confirmedAt   DateTime?
+  rejectReason  String?
+
+  task        WeeklyTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  member      Member     @relation("WeeklyTaskSubmitter", fields: [memberId], references: [id])
+  confirmedBy Member?    @relation("WeeklyTaskConfirmer", fields: [confirmedById], references: [id])
+
+  @@unique([taskId, memberId])
+  createdAt DateTime @default(now())
+}
+
+enum WeeklyTaskStatus {
+  ACTIV
+  INCHIS
+}
+
+enum WeeklySubmissionStatus {
+  PREDAT
+  CONFIRMAT
+  RESPINS
 }
