@@ -6,18 +6,26 @@ type Sendable = { send: TextChannel["send"] };
 
 const CH = {
   announcements: process.env.DISCORD_ANNOUNCEMENTS_CHANNEL ?? "",
-  events: process.env.DISCORD_EVENTS_CHANNEL ?? "",
-  rankings: process.env.DISCORD_RANKINGS_CHANNEL ?? "",
-  alerts: process.env.DISCORD_ALERTS_CHANNEL ?? "",
+  events:        process.env.DISCORD_EVENTS_CHANNEL ?? "",
+  rankings:      process.env.DISCORD_RANKINGS_CHANNEL ?? "",
+  alerts:        process.env.DISCORD_ALERTS_CHANNEL ?? "",
+  tasks:         process.env.DISCORD_TASKS_CHANNEL ?? "",
+  territories:   process.env.DISCORD_TERRITORIES_CHANNEL ?? "",
+  family:        process.env.DISCORD_FAMILY_CHANNEL ?? "",
 };
+
+async function fetchChannel(client: Client, id: string): Promise<Sendable | null> {
+  if (!id) return null;
+  const raw = await client.channels.fetch(id).catch(() => null);
+  if (!raw?.isTextBased()) return null;
+  return raw as unknown as Sendable;
+}
 
 // ── Post unposted announcements ───────────────────────────────────────────────
 
 export async function postPendingAnnouncements(client: Client) {
-  if (!CH.announcements) return;
-  const raw = await client.channels.fetch(CH.announcements).catch(() => null);
-  if (!raw?.isTextBased()) return;
-  const channel = raw as unknown as Sendable;
+  const channel = await fetchChannel(client, CH.announcements);
+  if (!channel) return;
 
   const pending = await db.announcement.findMany({
     where: { discordPostedAt: null },
@@ -44,10 +52,8 @@ export async function postPendingAnnouncements(client: Client) {
 // ── Event reminders (24h before) ─────────────────────────────────────────────
 
 export async function sendEventReminders(client: Client) {
-  if (!CH.events) return;
-  const raw = await client.channels.fetch(CH.events).catch(() => null);
-  if (!raw?.isTextBased()) return;
-  const channel = raw as unknown as Sendable;
+  const channel = await fetchChannel(client, CH.events);
+  if (!channel) return;
 
   const in24h = new Date(Date.now() + 24 * 60 * 60 * 1000);
   const events = await db.orgEvent.findMany({
@@ -76,10 +82,8 @@ export async function sendEventReminders(client: Client) {
 // ── Weekly rankings report (every Monday 09:00) ───────────────────────────────
 
 async function sendWeeklyRankings(client: Client) {
-  if (!CH.rankings) return;
-  const raw = await client.channels.fetch(CH.rankings).catch(() => null);
-  if (!raw?.isTextBased()) return;
-  const channel = raw as unknown as Sendable;
+  const channel = await fetchChannel(client, CH.rankings);
+  if (!channel) return;
 
   const now = new Date();
   const startOfWeek = new Date(now);
@@ -119,14 +123,12 @@ async function sendWeeklyRankings(client: Client) {
 // ── Low chest alert ───────────────────────────────────────────────────────────
 
 async function checkChestBalance(client: Client) {
-  if (!CH.alerts) return;
   const LOW_THRESHOLD = 100_000;
   const chest = await db.chest.findFirst({ select: { balance: true } });
   if (!chest || chest.balance > LOW_THRESHOLD) return;
 
-  const raw = await client.channels.fetch(CH.alerts).catch(() => null);
-  if (!raw?.isTextBased()) return;
-  const channel = raw as unknown as Sendable;
+  const channel = await fetchChannel(client, CH.alerts);
+  if (!channel) return;
 
   const embed = new EmbedBuilder()
     .setTitle("⚠️ Sold seif redus")
@@ -140,7 +142,9 @@ async function checkChestBalance(client: Client) {
 // ── Monthly winner announcement ───────────────────────────────────────────────
 
 async function announceMonthlyWinner(client: Client) {
-  if (!CH.rankings) return;
+  const channel = await fetchChannel(client, CH.rankings);
+  if (!channel) return;
+
   const now = new Date();
   const winner = await db.monthlyWinner.findUnique({
     where: {
@@ -154,10 +158,6 @@ async function announceMonthlyWinner(client: Client) {
 
   if (!winner) return;
 
-  const raw = await client.channels.fetch(CH.rankings).catch(() => null);
-  if (!raw?.isTextBased()) return;
-  const channel = raw as unknown as Sendable;
-
   const embed = new EmbedBuilder()
     .setTitle("🏆 Gangsterul Lunii")
     .setDescription(
@@ -169,21 +169,196 @@ async function announceMonthlyWinner(client: Client) {
   await channel.send({ embeds: [embed] }).catch(console.error);
 }
 
+// ── Varianta C: Task săptămânal publicat → #taskuri ──────────────────────────
+
+async function notifyNewWeeklyTask(client: Client) {
+  const channel = await fetchChannel(client, CH.tasks);
+  if (!channel) return;
+
+  const tasks = await db.weeklyTask.findMany({
+    where: { status: "ACTIV", discordPostedAt: null },
+    include: { createdBy: { select: { name: true, rankName: true } } },
+    orderBy: { createdAt: "asc" },
+  });
+
+  for (const task of tasks) {
+    const target = task.targetJson as {
+      rankMin: number; rankMax: number; crewIds: string[]; roles: string[];
+    };
+    const targetText =
+      target.rankMin === 20 && target.rankMax === 100 &&
+      target.crewIds.length === 0 && target.roles.length === 0
+        ? "Toți membrii"
+        : [
+            `Grade ${target.rankMin}–${target.rankMax}`,
+            target.roles.length > 0 ? target.roles.join(", ") : null,
+          ].filter(Boolean).join(" · ");
+
+    const embed = new EmbedBuilder()
+      .setTitle(`📋 Task săptămânal nou: ${task.title}`)
+      .setDescription(task.description ?? "Fă predarea din portal când ești gata.")
+      .addFields({ name: "Destinatari", value: targetText, inline: true })
+      .setColor(0xec4899)
+      .setFooter({ text: `Publicat de ${task.createdBy.name} · ${task.createdBy.rankName}` })
+      .setTimestamp(task.createdAt);
+
+    await channel.send({ embeds: [embed] }).catch(console.error);
+    await db.weeklyTask.update({
+      where: { id: task.id },
+      data: { discordPostedAt: new Date() },
+    });
+  }
+}
+
+// ── Varianta C: Predare nouă → DM Boss/Underboss ─────────────────────────────
+
+async function notifyPendingSubmissions(client: Client) {
+  const pending = await db.weeklyTaskSubmission.findMany({
+    where: { status: "PREDAT", discordNotifiedAt: null },
+    include: {
+      member: { select: { name: true, memberCode: true } },
+      task: { select: { title: true } },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+  if (pending.length === 0) return;
+
+  const leaders = await db.member.findMany({
+    where: { rankLevel: { gte: 90 }, status: "ACTIV", discordId: { not: null } },
+    select: { discordId: true },
+  });
+  if (leaders.length === 0) return;
+
+  for (const sub of pending) {
+    const embed = new EmbedBuilder()
+      .setTitle("🔔 Predare de confirmat")
+      .setDescription(
+        `**${sub.member.name}** (${sub.member.memberCode}) a predat taskul:\n**${sub.task.title}**`
+      )
+      .setColor(0xf59e0b)
+      .setTimestamp(sub.createdAt);
+
+    if (sub.note) embed.addFields({ name: "Notă", value: sub.note });
+
+    for (const leader of leaders) {
+      try {
+        const user = await client.users.fetch(leader.discordId!);
+        await user.send({ embeds: [embed] });
+      } catch {
+        // DMs disabled or invalid Discord ID — skip silently
+      }
+    }
+
+    await db.weeklyTaskSubmission.update({
+      where: { id: sub.id },
+      data: { discordNotifiedAt: new Date() },
+    });
+  }
+}
+
+// ── Varianta C: Teritoriu schimbat → #teritorii ───────────────────────────────
+
+async function notifyTerritoryChanges(client: Client) {
+  const channel = await fetchChannel(client, CH.territories);
+  if (!channel) return;
+
+  const STATUS_LABEL: Record<string, string> = {
+    CONTROLAT: "Controlat 🟢",
+    CONTESTAT: "Contestat 🟡",
+    NEUTRU: "Neutru ⚪",
+    CU_ARME: "Cu arme 🟢",
+    FARA_ARME: "Fără arme 🔴",
+  };
+  const STATUS_COLOR: Record<string, number> = {
+    CONTROLAT: 0x10b981,
+    CU_ARME:   0x10b981,
+    CONTESTAT: 0xf59e0b,
+    FARA_ARME: 0xef4444,
+    NEUTRU:    0x6b7280,
+  };
+
+  const changes = await db.territoryHistory.findMany({
+    where: { discordPostedAt: null },
+    include: {
+      territory: { select: { name: true, zone: true } },
+      changedBy: { select: { name: true } },
+    },
+    orderBy: { createdAt: "asc" },
+    take: 10,
+  });
+
+  for (const ch of changes) {
+    const description = ch.fromStatus
+      ? `${STATUS_LABEL[ch.fromStatus] ?? ch.fromStatus} → ${STATUS_LABEL[ch.toStatus] ?? ch.toStatus}`
+      : `Status setat: ${STATUS_LABEL[ch.toStatus] ?? ch.toStatus}`;
+
+    const fields: { name: string; value: string; inline: boolean }[] = [];
+    if (ch.territory.zone) fields.push({ name: "Zonă", value: ch.territory.zone, inline: true });
+    if (ch.note) fields.push({ name: "Notă", value: ch.note, inline: true });
+
+    const embed = new EmbedBuilder()
+      .setTitle(`🗺️ Teritoriu: ${ch.territory.name}`)
+      .setDescription(description)
+      .addFields(fields)
+      .setColor(STATUS_COLOR[ch.toStatus] ?? 0x6b7280)
+      .setFooter({ text: `Modificat de ${ch.changedBy.name}` })
+      .setTimestamp(ch.createdAt);
+
+    await channel.send({ embeds: [embed] }).catch(console.error);
+    await db.territoryHistory.update({
+      where: { id: ch.id },
+      data: { discordPostedAt: new Date() },
+    });
+  }
+}
+
+// ── Varianta C: Recrutare aprobată → #familie ────────────────────────────────
+
+async function notifyApprovedRecruits(client: Client) {
+  const channel = await fetchChannel(client, CH.family);
+  if (!channel) return;
+
+  const recruits = await db.recruit.findMany({
+    where: { status: "APROBAT", discordNotifiedAt: null },
+    include: { recruitedBy: { select: { name: true, rankName: true } } },
+    orderBy: { approvedAt: "asc" },
+  });
+
+  for (const r of recruits) {
+    const embed = new EmbedBuilder()
+      .setTitle("🤝 Nou membru acceptat!")
+      .setDescription(
+        `**${r.discordName}** a trecut de probație și a fost acceptat în familie.\nBine ai venit, ${r.discordName}!`
+      )
+      .addFields({
+        name: "Recrutor",
+        value: `${r.recruitedBy.name} · ${r.recruitedBy.rankName}`,
+        inline: true,
+      })
+      .setColor(0x10b981)
+      .setTimestamp(r.approvedAt ?? r.updatedAt);
+
+    await channel.send({ embeds: [embed] }).catch(console.error);
+    await db.recruit.update({
+      where: { id: r.id },
+      data: { discordNotifiedAt: new Date() },
+    });
+  }
+}
+
 // ── Register all cron jobs ────────────────────────────────────────────────────
 
 export function registerSchedules(client: Client) {
-  // Check for new announcements every 2 minutes
+  // Existing jobs
   cron.schedule("*/2 * * * *", () => postPendingAnnouncements(client));
-
-  // Check for event reminders every 30 minutes
   cron.schedule("*/30 * * * *", () => sendEventReminders(client));
-
-  // Weekly rankings — every Monday at 09:00
   cron.schedule("0 9 * * 1", () => sendWeeklyRankings(client));
-
-  // Monthly winner — 1st of month at 10:00
   cron.schedule("0 10 1 * *", () => announceMonthlyWinner(client));
-
-  // Low chest check — daily at noon
   cron.schedule("0 12 * * *", () => checkChestBalance(client));
+
+  // Varianta C — new notifications
+  cron.schedule("*/2 * * * *", () => notifyNewWeeklyTask(client));
+  cron.schedule("*/5 * * * *", () => notifyPendingSubmissions(client));
+  cron.schedule("*/2 * * * *", () => notifyTerritoryChanges(client));
+  cron.schedule("*/5 * * * *", () => notifyApprovedRecruits(client));
 }

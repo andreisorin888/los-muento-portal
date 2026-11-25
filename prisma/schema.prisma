@@ -240,17 +240,18 @@ enum WarningSeverity {
 }
 
 model Recruit {
-  id             String        @id @default(cuid())
-  discordName    String
-  discordId      String?
-  status         RecruitStatus @default(CANDIDAT)
-  recruitedById  String
-  notes          String?
-  probationStart DateTime?
-  approvedById   String?
-  approvedAt     DateTime?
-  rejectedNote   String?
-  memberId       String?
+  id                  String        @id @default(cuid())
+  discordName         String
+  discordId           String?
+  status              RecruitStatus @default(CANDIDAT)
+  recruitedById       String
+  notes               String?
+  probationStart      DateTime?
+  approvedById        String?
+  approvedAt          DateTime?
+  rejectedNote        String?
+  memberId            String?
+  discordNotifiedAt   DateTime?
 
   recruitedBy Member  @relation("RecruiterOf", fields: [recruitedById], references: [id])
   approvedBy  Member? @relation("ApproverOf", fields: [approvedById], references: [id])
@@ -538,12 +539,13 @@ model Territory {
 }
 
 model TerritoryHistory {
-  id          String          @id @default(cuid())
-  territoryId String
-  note        String?
-  fromStatus  TerritoryStatus?
-  toStatus    TerritoryStatus
-  changedById String
+  id              String           @id @default(cuid())
+  territoryId     String
+  note            String?
+  fromStatus      TerritoryStatus?
+  toStatus        TerritoryStatus
+  changedById     String
+  discordPostedAt DateTime?
 
   territory Territory @relation(fields: [territoryId], references: [id])
   changedBy Member    @relation("TerritoryChanger", fields: [changedById], references: [id])
@@ -940,12 +942,13 @@ model CrewTaskSubmission {
 // ── Task săptămânal ───────────────────────────────────────────────────────────
 
 model WeeklyTask {
-  id          String           @id @default(cuid())
-  title       String
-  description String?
-  targetJson  Json
-  status      WeeklyTaskStatus @default(ACTIV)
-  createdById String
+  id              String           @id @default(cuid())
+  title           String
+  description     String?
+  targetJson      Json
+  status          WeeklyTaskStatus @default(ACTIV)
+  createdById     String
+  discordPostedAt DateTime?
 
   createdBy   Member                 @relation("WeeklyTaskCreator", fields: [createdById], references: [id])
   submissions WeeklyTaskSubmission[]
@@ -955,15 +958,16 @@ model WeeklyTask {
 }
 
 model WeeklyTaskSubmission {
-  id            String                 @id @default(cuid())
-  taskId        String
-  memberId      String
-  note          String?
-  proofUrl      String?
-  status        WeeklySubmissionStatus @default(PREDAT)
-  confirmedById String?
-  confirmedAt   DateTime?
-  rejectReason  String?
+  id                  String                 @id @default(cuid())
+  taskId              String
+  memberId            String
+  note                String?
+  proofUrl            String?
+  status              WeeklySubmissionStatus @default(PREDAT)
+  confirmedById       String?
+  confirmedAt         DateTime?
+  rejectReason        String?
+  discordNotifiedAt   DateTime?
 
   task        WeeklyTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
   member      Member     @relation("WeeklyTaskSubmitter", fields: [memberId], references: [id])
