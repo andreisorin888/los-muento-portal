@@ -218,6 +218,26 @@ export async function rejectWeeklySubmission(submissionId: string, reason?: stri
   }
 }
 
+export async function editWeeklyTask(data: {
+  taskId: string;
+  title: string;
+  description?: string;
+}): Promise<{ error?: string }> {
+  try {
+    const actor = await getActor();
+    if (actor.rankLevel < 100) return { error: "Doar Boss-ul poate edita taskul săptămânal." };
+    if (!data.title.trim()) return { error: "Titlul este obligatoriu." };
+    await db.weeklyTask.update({
+      where: { id: data.taskId },
+      data: { title: data.title.trim(), description: data.description?.trim() || null },
+    });
+    revalidatePath("/tasks");
+    return {};
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Eroare necunoscută." };
+  }
+}
+
 export async function closeWeeklyTask(taskId: string): Promise<{ error?: string }> {
   try {
     const actor = await getActor();

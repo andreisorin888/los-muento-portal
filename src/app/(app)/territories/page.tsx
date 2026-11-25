@@ -118,12 +118,11 @@ export default async function TerritoriesPage() {
                       </p>
                     )}
 
-                    {t.history[0] && (
-                      <p className="text-xs text-muted">
-                        Ultima modificare: {new Date(t.history[0].createdAt).toLocaleDateString("ro-RO")}
-                        {t.history[0].note ? ` — ${t.history[0].note}` : ""}
-                      </p>
-                    )}
+                    <p className="text-xs text-muted">
+                      Ultima modificare:{" "}
+                      {new Date(t.history[0]?.createdAt ?? t.updatedAt).toLocaleDateString("ro-RO", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                      {t.history[0]?.note ? ` — ${t.history[0].note}` : ""}
+                    </p>
                     {canManage && (
                       <div className="mt-auto pt-1">
                         <TerritoryStatusBtn

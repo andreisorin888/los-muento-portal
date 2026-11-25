@@ -1,7 +1,7 @@
 "use client";
 import { useState, useTransition } from "react";
-import { CheckCircle2, XCircle, Users } from "lucide-react";
-import { createWeeklyTask, confirmWeeklySubmission, confirmAllWeeklySubmissions, rejectWeeklySubmission, closeWeeklyTask } from "@/app/actions/weeklyTask";
+import { CheckCircle2, XCircle, Users, Pencil } from "lucide-react";
+import { createWeeklyTask, confirmWeeklySubmission, confirmAllWeeklySubmissions, rejectWeeklySubmission, closeWeeklyTask, editWeeklyTask } from "@/app/actions/weeklyTask";
 import { Field } from "@/components/ui";
 import type { WeeklyTarget } from "@/app/actions/weeklyTask";
 
@@ -126,10 +126,14 @@ export function WeeklyTaskCreateForm({ crews }: { crews: Crew[] }) {
 export function WeeklyTaskBossPanel({ task }: { task: ActiveTask }) {
   const [pending, startTransition] = useTransition();
   const [confirmAllResult, setConfirmAllResult] = useState<string | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState(task.title);
+  const [editDesc, setEditDesc] = useState(task.description ?? "");
+  const [editError, setEditError] = useState("");
+  const [editOk, setEditOk] = useState(false);
 
   const predate = task.submissions.filter((s) => s.status === "PREDAT");
   const confirmate = task.submissions.filter((s) => s.status === "CONFIRMAT");
-  const respinse = task.submissions.filter((s) => s.status === "RESPINS");
 
   function confirmAll() {
     startTransition(async () => {
@@ -142,8 +146,40 @@ export function WeeklyTaskBossPanel({ task }: { task: ActiveTask }) {
     startTransition(async () => { await closeWeeklyTask(task.id); });
   }
 
+  function saveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    setEditError(""); setEditOk(false);
+    startTransition(async () => {
+      const r = await editWeeklyTask({ taskId: task.id, title: editTitle, description: editDesc });
+      if (r.error) { setEditError(r.error); return; }
+      setEditOk(true);
+      setEditOpen(false);
+    });
+  }
+
   return (
     <div className="space-y-4">
+      {/* Edit form */}
+      {editOpen && (
+        <form onSubmit={saveEdit} className="rounded-xl border border-line bg-white/[.03] p-4 space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted">Editează task</p>
+          <Field label="Titlu">
+            <input className="input" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} required />
+          </Field>
+          <Field label="Descriere (opțional)">
+            <input className="input" value={editDesc} onChange={(e) => setEditDesc(e.target.value)} />
+          </Field>
+          {editError && <p className="text-sm text-rose-400">{editError}</p>}
+          <div className="flex gap-2">
+            <button type="submit" className="btn-primary text-xs" disabled={pending || !editTitle.trim()}>
+              {pending ? "Se salvează…" : "Salvează"}
+            </button>
+            <button type="button" className="btn-ghost text-xs" onClick={() => setEditOpen(false)}>Anulează</button>
+          </div>
+        </form>
+      )}
+      {editOk && <p className="text-sm text-emerald">Task actualizat.</p>}
+
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4 text-muted" />
@@ -152,6 +188,9 @@ export function WeeklyTaskBossPanel({ task }: { task: ActiveTask }) {
           </span>
         </div>
         <div className="flex gap-2">
+          <button className="btn-ghost text-xs flex items-center gap-1" onClick={() => setEditOpen((o) => !o)} disabled={pending}>
+            <Pencil className="h-3.5 w-3.5" /> Editează
+          </button>
           {predate.length > 0 && (
             <button className="btn-primary text-xs" onClick={confirmAll} disabled={pending}>
               Confirmă toți ({predate.length})
