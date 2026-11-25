@@ -5,7 +5,7 @@
   "description": "Discord bot for LOS MUENTO portal — separate process, shared DB",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "npx prisma generate --schema=../prisma/schema.prisma && tsc",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts"
   },
